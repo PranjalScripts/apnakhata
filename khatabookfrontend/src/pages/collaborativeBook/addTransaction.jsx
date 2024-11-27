@@ -35,7 +35,11 @@ const AddTransactions = () => {
   // Handle form input changes
   const handleChange = (e) => {
     const { name, value } = e.target;
-    setFormData({ ...formData, [name]: value });
+   setFormData({
+     ...formData,
+     [name]: name === "amount" ? parseFloat(value) || 0 : value,
+   });
+
   };
 
   // Handle form submission
@@ -103,8 +107,8 @@ const AddTransactions = () => {
               onChange={handleChange}
               className="w-full border rounded px-3 py-2 focus:ring focus:ring-blue-200"
             >
-              <option value="you will give">You Will Give</option>
-              <option value="you will get">You Will Get</option>
+              <option value="you will give">You Will Get</option>
+              <option value="you will get">You Will Give</option>
             </select>
           </div>
           <div>

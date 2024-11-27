@@ -25,6 +25,11 @@ const transactionSchema = new mongoose.Schema(
     file: {
       type: String,
     },
+    initiatedBy: {
+      type: String,
+      enum: ["user", "client"],
+      required: true, // Identifies who initiated the transaction
+    },
     transactionHistory: [
       {
         transactionType: {
@@ -49,22 +54,33 @@ const transactionSchema = new mongoose.Schema(
         confirmationStatus: {
           type: String,
           enum: ["pending", "confirmed"],
-          default: "pending", // Default status when a transaction is created
+          default: "pending", // Default status for a new transaction
         },
       },
     ],
     outstandingBalance: {
       type: Number,
+      default: 0,
     },
   },
   { timestamps: true }
 );
 
-// Pre-save hook to update the transaction history and calculate the outstanding balance
+// Virtual field to flip the transaction type for the opposite party
+transactionSchema.virtual("visibleTransactionType").get(function () {
+  if (this.transactionType === "you will give") {
+    return "you will get";
+  } else if (this.transactionType === "you will get") {
+    return "you will give";
+  }
+  return this.transactionType; // Default fallback
+});
+
+// Pre-save hook to handle transaction history and outstanding balance
 transactionSchema.pre("save", async function (next) {
   const transaction = this;
 
-  // Calculate finalAmount
+  // Calculate finalAmount (this part looks fine)
   if (transaction.transactionType === "you will get") {
     transaction.finalAmount = transaction.amount;
   } else if (transaction.transactionType === "you will give") {
@@ -87,27 +103,13 @@ transactionSchema.pre("save", async function (next) {
     }
   }
 
-  // Ensure no duplicate transactions in the history
-  if (
-    !lastHistory ||
-    lastHistory.transactionType !== transaction.transactionType ||
-    lastHistory.amount !== transaction.amount
-  ) {
-    transaction.transactionHistory.push({
-      transactionType: transaction.transactionType,
-      amount: transaction.amount,
-      description: transaction.description,
-      transactionDate: transaction.transactionDate,
-      outstandingBalance: newOutstandingBalance,
-      confirmationStatus: "pending", // Default status
-    });
-  }
-
+  
   // Update the outstanding balance for the transaction document
   transaction.outstandingBalance = newOutstandingBalance;
 
   next();
 });
+
 
 // Transaction model
 const Transaction = mongoose.model("Transaction", transactionSchema);

@@ -5,6 +5,6 @@ const authenticateUser = require("../../middleware/authMiddleware"); // Middlewa
 
 // Route to fetch transactions
 router.get("/transactions", authenticateUser, getTransactions);
-router.post("/add-transaction", authenticateUser, addTransaction);
+//router.post("/add-transaction", authenticateUser, addTransaction);
 
 module.exports = router;

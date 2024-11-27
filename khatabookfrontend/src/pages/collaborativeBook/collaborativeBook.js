@@ -1,6 +1,6 @@
 import React, { useEffect, useState } from "react";
 import axios from "axios";
-import AddTransactions from "../collaborativeBook/addTransaction"; // Import AddTransactions component
+import AddTransactions from "../collaborativeBook/AddTransaction"; // Import AddTransactions component
 
 const CollaborativeBook = () => {
   const [transactions, setTransactions] = useState([]);
@@ -100,7 +100,7 @@ const CollaborativeBook = () => {
                 >
                   <td className="px-4 py-2 text-center">{index + 1}</td>
                   <td className="px-4 py-2 text-center">
-                    {transaction.transactionType === "you will get"
+                    {transaction.outstandingBalance>0
                       ? "you will give"
                       : "you will get"}
                   </td>

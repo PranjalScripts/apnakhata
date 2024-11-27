@@ -9,7 +9,8 @@ const connectDb = require("./config/connectDb");
 const transactionRoutes = require("./routes/transactionRoutes/transactionRoutes");
 const bookRoutes = require("./routes/bookRoute/bookRoutes");
 const clientUserRoutes = require("./routes/clientUserRoutes/clientUserRoutes");
- 
+const ledgerBookRoutes = require("./routes/bookRoute/ledgerbook");
+const collabtransactionRoutes = require("./routes/transactionRoutes/collabtransaction");
 //const transactionBookRoutes =require("./routes/transactionbook/transactionBookRoutes")
  // config dot env file
 dotenv.config();
@@ -35,7 +36,8 @@ app.use("/api/v3/client", clientUserRoutes);
 app.use("/api/v4/transaction", transactionRoutes);
 //api for collaborative books
  app.use("/api", transactionsRouter); // Prefix the router with `/api`
-
+app.use("/api/ledgerbooks", ledgerBookRoutes);
+app.use("/api/collab-transactions", collabtransactionRoutes);
  
 app.get("/", (req, res) => { res.send("<h1> Welcome to the Expense Management API</h1>") });
 

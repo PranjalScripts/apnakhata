@@ -20,7 +20,7 @@ const signup = async (req, res) => {
     await newUser.save();
 
     // Generate a JWT token
-    const token = jwt.sign({ id: newUser._id ,email:newUser.email,phone:newUser.phone}, process.env.JWT_SECRET, {
+    const token = jwt.sign({ id: newUser._id ,email:newUser.email,phone:newUser.phone,name:newUser.name}, process.env.JWT_SECRET, {
  
       expiresIn: "7d",
      });
@@ -59,11 +59,13 @@ const login = async (req, res) => {
     }
 
     // Generate a JWT token
-    const token = jwt.sign({ id: user._id ,email:user.email,phone:user.phone}, process.env.JWT_SECRET, {
- 
-      expiresIn: "7d",
- 
-    });
+    const token = jwt.sign(
+      { id: user._id, name: user.name, email: user.email, phone: user.phone },
+      process.env.JWT_SECRET,
+      {
+        expiresIn: "7d",
+      }
+    );
 
     // Return user data along with token
     res.status(200).json({
