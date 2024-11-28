@@ -27,7 +27,6 @@ const transactionSchema = new mongoose.Schema(
     },
     initiatedBy: {
       type: String,
-      enum: ["user", "client"],
       required: true, // Identifies who initiated the transaction
     },
     transactionHistory: [
@@ -56,11 +55,15 @@ const transactionSchema = new mongoose.Schema(
           enum: ["pending", "confirmed"],
           default: "pending", // Default status for a new transaction
         },
+        initiatedBy: {
+          type: String,
+     
+        },
       },
     ],
     outstandingBalance: {
       type: Number,
-      default: 0,
+      default: 0, 
     },
   },
   { timestamps: true }
@@ -102,11 +105,9 @@ transactionSchema.pre("save", async function (next) {
       newOutstandingBalance -= transaction.amount;
     }
   }
-
-  
   // Update the outstanding balance for the transaction document
   transaction.outstandingBalance = newOutstandingBalance;
-
+ 
   next();
 });
 

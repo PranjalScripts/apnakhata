@@ -1,122 +1,179 @@
-import React, { useState, useEffect } from "react";
-import axios from "axios";
+import React, { useEffect, useState } from "react";
+import { useParams } from "react-router-dom";
 
 const CollaborativeBookRecords = () => {
-    const [records, setRecords] = useState([]);
-    const [loading, setLoading] = useState(true);
-    const [error, setError] = useState(null);
+  const { transactionId } = useParams(); // Get transactionId from URL
+  const [transaction, setTransaction] = useState(null);
+  const [updating, setUpdating] = useState(false);
 
-    useEffect(() => {
-        const fetchRecords = async () => {
-            try {
-                const response = await axios.get(
-                    `${process.env.REACT_APP_URL}/api/transactions`,
-                    {
-                        headers: { Authorization: `Bearer ${localStorage.getItem("token")}` },
-                    }
-                );
-                setRecords(response.data);
-            } catch (err) {
-                setError("Failed to fetch records");
-            } finally {
-                setLoading(false);
-            }
-        };
-
-        fetchRecords();
-    }, []);
-
-    if (loading) {
-        return (
-            <div className="flex justify-center items-center h-screen text-xl font-semibold text-gray-700">
-                Loading...
-            </div>
+  useEffect(() => {
+    const fetchTransaction = async () => {
+      const token = localStorage.getItem("token");
+      try {
+        const response = await fetch(
+          `http://localhost:5100/api/collab-transactions/single-transaction/${transactionId}`,
+          {
+            headers: { Authorization: `Bearer ${token}` },
+          }
         );
-    }
+        const data = await response.json();
+        if (data.success) {
+          setTransaction(data.data);
+        } else {
+          console.error("Transaction not found");
+        }
+      } catch (error) {
+        console.error("Error fetching transaction details:", error);
+      }
+    };
 
-    if (error) {
-        return (
-            <div className="flex justify-center items-center h-screen text-xl font-semibold text-red-500">
-                {error}
-            </div>
-        );
-    }
+    fetchTransaction();
+  }, [transactionId]);
 
+  const updateTransactionStatus = async (entryId) => {
+    setUpdating(true);
+    const token = localStorage.getItem("token");
+    try {
+      const response = await fetch(
+        `http://localhost:5100/api/collab-transactions/transactions/${transactionId}/entries/${entryId}/confirm`,
+        {
+          method: "PATCH",
+          headers: { Authorization: `Bearer ${token}` },
+        }
+      );
+
+      if (response.ok) {
+        // Update the transaction state
+        setTransaction((prev) => ({
+          ...prev,
+          transactionHistory: prev.transactionHistory.map((entry) =>
+            entry._id === entryId
+              ? { ...entry, confirmationStatus: "confirmed" }
+              : entry
+          ),
+        }));
+        alert("Transaction status updated successfully!");
+      } else {
+        console.error("Failed to update transaction status.");
+        alert("Failed to update status. Please try again.");
+      }
+    } catch (error) {
+      console.error("Error updating transaction status:", error);
+    } finally {
+      setUpdating(false);
+    }
+  };
+
+  if (!transaction) {
     return (
-        <div className="container mx-auto p-6">
-            <h2 className="text-3xl font-bold text-gray-800 mb-6">Collaborative Book Records</h2>
-            {records.length === 0 ? (
-                <p className="text-lg text-gray-500">No records available.</p>
-            ) : (
-                records.map((record) => (
-                    <div
-                        key={record._id}
-                        className="bg-white shadow-lg rounded-lg p-6 mb-6 border border-gray-200"
-                    >
-                        <h3 className="text-2xl font-semibold text-gray-800 mb-2">
-                            Book: <span className="font-medium">{record.bookId.bookname}</span>
-                        </h3>
-                        <p className="text-lg text-gray-700 mb-2">
-                            <strong>User:</strong> {record.userId.name}
-                        </p>
-                        <p className="text-lg text-gray-700 mb-2">
-                            <strong>Client:</strong> {record.clientUserId}
-                        </p>
-                        <p className="text-lg text-gray-700 mb-4">
-                            <strong>Outstanding Balance:</strong>{" "}
-                            <span
-                                className={`font-semibold ${record.outstandingBalance < 0 ? "text-red-500" : "text-green-500"
-                                    }`}
-                            >
-                                {Math.abs(record.outstandingBalance)}
-                            </span>
-                        </p>
-
-                        {/* Transaction History Table */}
-                        <h4 className="text-xl font-semibold text-gray-800 mb-4">Transaction History:</h4>
-                        <div className="overflow-x-auto">
-                            <table className="min-w-full table-auto border-collapse border border-gray-300">
-                                <thead className="bg-gray-100">
-                                    <tr>
-                                        <th className="px-4 py-2 border-b text-left text-gray-700">Type</th>
-                                        <th className="px-4 py-2 border-b text-left text-gray-700">Amount</th>
-                                        <th className="px-4 py-2 border-b text-left text-gray-700">Description</th>
-                                        <th className="px-4 py-2 border-b text-left text-gray-700">Date</th>
-                                        <th className="px-4 py-2 border-b text-left text-gray-700">Outstanding Balance</th>
-                                    </tr>
-                                </thead>
-                                <tbody>
-                                    {record.transactionHistory
-                                        .filter((transaction) => transaction.outstandingBalance !== 0) // Filter out transactions with 0 outstandingBalance
-                                        .map((transaction) => (
-                                            <tr key={transaction._id} className="hover:bg-gray-50">
-                                                <td className="px-4 py-2 border-b">{transaction.transactionType}</td>
-                                                <td className="px-4 py-2 border-b">{transaction.amount || "N/A"}</td>
-                                                <td className="px-4 py-2 border-b">{transaction.description || "N/A"}</td>
-                                                <td className="px-4 py-2 border-b">
-                                                    {new Date(transaction.transactionDate).toLocaleString()}
-                                                </td>
-                                                <td className="px-4 py-2 border-b">
-                                                    <span
-                                                        className={`font-semibold ${transaction.outstandingBalance < 0
-                                                                ? "text-red-500"
-                                                                : "text-green-500"
-                                                            }`}
-                                                    >
-                                                        {Math.abs(transaction.outstandingBalance)}
-                                                    </span>
-                                                </td>
-                                            </tr>
-                                        ))}
-                                </tbody>
-
-                            </table>
-                        </div>
-                    </div>
-                ))
-            )}
-        </div>
+      <div className="text-center py-10">Loading transaction details...</div>
     );
+  }
+
+  return (
+    <div className="container mx-auto p-6 max-w-3xl">
+      <h1 className="text-3xl font-semibold text-gray-800 mb-6">
+        Transaction Details
+      </h1>
+
+      <div className="bg-white shadow-lg rounded-lg p-6 mb-6">
+        <table className="min-w-full table-auto">
+          <thead>
+            <tr className="border-b border-gray-200">
+              <th className="px-4 py-2 text-left text-gray-700">Field</th>
+              <th className="px-4 py-2 text-left text-gray-700">Value</th>
+            </tr>
+          </thead>
+          <tbody>
+            <tr>
+              <td className="px-4 py-2 font-medium text-gray-700">
+                Transaction ID
+              </td>
+              <td className="px-4 py-2">{transaction._id}</td>
+            </tr>
+            <tr className="border-t border-gray-200">
+              <td className="px-4 py-2 font-medium text-gray-700">Book Name</td>
+              <td className="px-4 py-2">{transaction.bookId.bookname}</td>
+            </tr>
+            <tr>
+              <td className="px-4 py-2 font-medium text-gray-700">User Name</td>
+              <td className="px-4 py-2">{transaction.userId.name}</td>
+            </tr>
+            <tr className="border-t border-gray-200">
+              <td className="px-4 py-2 font-medium text-gray-700">
+                Client Name
+              </td>
+              <td className="px-4 py-2">{transaction.clientUserId.name}</td>
+            </tr>
+            <tr>
+              <td className="px-4 py-2 font-medium text-gray-700">
+                Transaction Type
+              </td>
+              <td className="px-4 py-2">{transaction.transactionType}</td>
+            </tr>
+            <tr className="border-t border-gray-200">
+              <td className="px-4 py-2 font-medium text-gray-700">
+                Outstanding Balance
+              </td>
+              <td className="px-4 py-2">{transaction.outstandingBalance}</td>
+            </tr>
+          </tbody>
+        </table>
+      </div>
+
+      <h2 className="text-2xl font-semibold text-gray-800 mb-4">
+        Transaction History
+      </h2>
+      <div className="bg-white shadow-lg rounded-lg p-6">
+        <table className="min-w-full table-auto">
+          <thead>
+            <tr className="border-b border-gray-200">
+              <th className="px-4 py-2 text-left text-gray-700">
+                Transaction type
+              </th>
+              <th className="px-4 py-2 text-left text-gray-700">Amount</th>
+              <th className="px-4 py-2 text-left text-gray-700">Description</th>
+              <th className="px-4 py-2 text-left text-gray-700">
+                Transaction Date
+              </th>
+              <th className="px-4 py-2 text-left text-gray-700">Status</th>
+              <th className="px-4 py-2 text-left text-gray-700">
+                Update Status
+              </th>
+            </tr>
+          </thead>
+          <tbody>
+            {transaction.transactionHistory.map((history) => (
+              <tr key={history._id} className="border-t border-gray-200">
+                <td className="px-4 py-2">{history.transactionType}</td>
+                <td className="px-4 py-2">{history.amount}</td>
+                <td className="px-4 py-2">{history.description}</td>
+                <td className="px-4 py-2">
+                  {new Date(history.transactionDate).toLocaleString()}
+                </td>
+                <td className="px-4 py-2">{history.confirmationStatus}</td>
+                <td className="px-4 py-2">
+                  {history.confirmationStatus === "confirmed" ? (
+                    <span className="text-green-600 font-semibold">
+                      Confirmed
+                    </span>
+                  ) : (
+                    <button
+                      onClick={() => updateTransactionStatus(history._id)}
+                      disabled={updating}
+                      className="px-4 py-2 bg-blue-500 text-white font-semibold rounded-lg hover:bg-blue-600 disabled:opacity-50"
+                    >
+                      {updating ? "Updating..." : "Confirm"}
+                    </button>
+                  )}
+                </td>
+              </tr>
+            ))}
+          </tbody>
+        </table>
+      </div>
+    </div>
+  );
 };
 
 export default CollaborativeBookRecords;

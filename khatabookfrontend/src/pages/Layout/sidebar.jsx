@@ -155,7 +155,7 @@ const Sidebar = () => {
             </li>
             <li className="hover:bg-gray-200">
               <a
-                href="/selfrecord"
+                href="/youadded"
                 className="flex items-center px-4 py-3 space-x-4"
               >
                 <FaFileAlt />
