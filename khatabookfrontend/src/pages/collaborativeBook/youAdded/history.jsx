@@ -118,6 +118,7 @@ const History = () => {
         <table className="min-w-full border-collapse border border-gray-300 bg-white shadow-md rounded-lg">
           <thead>
             <tr className="bg-gray-100 text-left text-gray-700">
+              <th className="border border-gray-300 px-4 py-2">initiatedBy</th>
               <th className="border border-gray-300 px-4 py-2">
                 Transaction Type
               </th>
@@ -127,15 +128,16 @@ const History = () => {
               <th className="border border-gray-300 px-4 py-2">
                 Outstanding Balance
               </th>
-               
-              <th className="border border-gray-300 px-4 py-2">
-                 Status
-              </th>
+              <th className="border border-gray-300 px-4 py-2">Status</th>
+              <th className="border border-gray-300 px-4 py-2">Action</th>
             </tr>
           </thead>
           <tbody>
             {transaction.transactionHistory.map((history) => (
               <tr key={history._id} className="hover:bg-gray-50">
+                <td className="border border-gray-300 px-4 py-2">
+                  {history.initiatedBy}
+                </td>
                 <td className="border border-gray-300 px-4 py-2">
                   {history.transactionType}
                 </td>
@@ -151,12 +153,13 @@ const History = () => {
                 <td className="border border-gray-300 px-4 py-2">
                   {history.outstandingBalance}
                 </td>
-                 
                 <td className="border border-gray-300 px-4 py-2">
                   {history.confirmationStatus === "confirmed" ? (
                     <span className="text-green-600 font-semibold">
                       Confirmed
                     </span>
+                  ) : history.initiaterId === transaction.userId ? ( // Check if the user initiated
+                    <span className="text-gray-500 italic">User initiated</span>
                   ) : (
                     <button
                       onClick={() => updateTransactionStatus(history._id)}

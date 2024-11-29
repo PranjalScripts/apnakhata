@@ -6,8 +6,7 @@ const CollaborativeBook = () => {
   const navigate = useNavigate(); // Use useNavigate for navigation
 
   useEffect(() => {
-    // Fetching the transaction data from the API
-    const token = localStorage.getItem("token");
+     const token = localStorage.getItem("token");
     fetch("http://localhost:5100/api/collab-transactions/client-transactions", {
       headers: { Authorization: `Bearer ${token}` },
     })
@@ -17,7 +16,7 @@ const CollaborativeBook = () => {
         if (Array.isArray(data.transactions)) {
           setTransactions(data.transactions);
         } else {
-          setTransactions([]); // In case the API response isn't in the expected format
+          setTransactions([]);
         }
       })
       .catch((error) => {
@@ -47,7 +46,7 @@ const CollaborativeBook = () => {
         <table className="min-w-full bg-white border border-gray-200 rounded-lg shadow-md">
           <thead>
             <tr>
-              <th className="px-4 py-2 border-b text-left">Transaction ID</th>
+              <th className="px-4 py-2 border-b text-left">Transaction Type</th>
               <th className="px-4 py-2 border-b text-left">Book Name</th>
               <th className="px-4 py-2 border-b text-left">User Name</th>
               <th className="px-4 py-2 border-b text-left">Client Name</th>
@@ -61,7 +60,9 @@ const CollaborativeBook = () => {
           <tbody>
             {transactions.map((transaction) => (
               <tr key={transaction._id} className="hover:bg-gray-100">
-                <td className="px-4 py-2 border-b">{transaction._id}</td>
+                <td className="px-4 py-2 border-b">
+                  {transaction.transactionType}
+                </td>
                 <td className="px-4 py-2 border-b">
                   {transaction.bookId.bookname}
                 </td>
@@ -74,6 +75,7 @@ const CollaborativeBook = () => {
                 <td className="px-4 py-2 border-b">
                   {transaction.outstandingBalance}
                 </td>
+
                 {/* Render the "View Details" button */}
                 <td className="px-4 py-2 border-b">
                   <button

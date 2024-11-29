@@ -194,6 +194,7 @@ const createTransaction = async (req, res) => {
      } = req.body;
     const userId = req.user.id; // Get the user ID from the authenticated user 
     const initiatedBy = req.user.name; // Get the user name from the authenticated user
+    const initiaterId=req.user.id;
     // Validate input
     if (
       !bookId ||
@@ -201,7 +202,8 @@ const createTransaction = async (req, res) => {
       !clientUserId ||
       !transactionType ||
       !amount ||
-       !initiatedBy ||
+      !initiatedBy ||
+      !initiaterId ||
       !description
     ) {
       return res.status(400).json({ message: "Missing required fields." });
@@ -233,6 +235,7 @@ const createTransaction = async (req, res) => {
         amount,
         description,
         initiatedBy,
+        initiaterId,
         transactionDate: new Date(),
         outstandingBalance: existingTransaction.outstandingBalance, // Keep outstanding balance unchanged until confirmation
         confirmationStatus: "pending",
@@ -253,12 +256,14 @@ const createTransaction = async (req, res) => {
         clientUserId,
         transactionType,
         initiatedBy,
+        initiaterId,
         transactionHistory: [
           {
             transactionType,
             amount,
             description,
             initiatedBy: req.user.name,
+            initiaterId:req.user.id,
             transactionDate: new Date(),
             outstandingBalance: 0, // Initially 0 until confirmation
             confirmationStatus: "pending",
@@ -283,6 +288,7 @@ const createTransaction = async (req, res) => {
 
 const confirmTransaction = async (req, res) => {
   try {
+       
     const { transactionId, entryId } = req.params;
     console.log(req.params) ;
     const transaction = await Transaction.findById(transactionId);
@@ -313,7 +319,7 @@ const confirmTransaction = async (req, res) => {
 
     // Mark this entry as confirmed
     pendingEntry.confirmationStatus = "confirmed";
-
+ 
     // Recalculate the outstanding balance based on all confirmed entries
     let newOutstandingBalance = 0;
 

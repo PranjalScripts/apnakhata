@@ -7,7 +7,7 @@ const AddTransactions = () => {
   const [transactionType, setTransactionType] = useState("");
   const [amount, setAmount] = useState(""); // Amount will be treated as a number
   const [description, setDescription] = useState("");
-  const [confirmationStatus, setConfirmationStatus] = useState("");
+ 
 
   const [clients, setClients] = useState([]); // To store client data
   const [books, setBooks] = useState([]); // To store book data
@@ -88,7 +88,7 @@ const AddTransactions = () => {
       transactionType,
       amount: parsedAmount, // Store amount as a number
       description,
-      confirmationStatus,
+       
     };
 
     // Send the POST request to create a transaction
@@ -233,27 +233,7 @@ const AddTransactions = () => {
             required
           />
         </div>
-
-        <div className="mb-4">
-          <label
-            htmlFor="confirmationStatus"
-            className="block text-sm font-medium text-gray-700"
-          >
-            Confirmation Status
-          </label>
-          <select
-            id="confirmationStatus"
-            value={confirmationStatus}
-            onChange={(e) => setConfirmationStatus(e.target.value)}
-            className="mt-1 block w-full p-2 border border-gray-300 rounded-md"
-            required
-          >
-            <option value="">Select Status</option>
-            <option value="pending">Pending</option>
-            <option value="confirmed">Confirmed</option>
-          </select>
-        </div>
-
+ 
         <button
           type="submit"
           className="bg-blue-500 text-white px-4 py-2 rounded-md"

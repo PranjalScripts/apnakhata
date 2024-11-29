@@ -27,9 +27,13 @@ const transactionSchema = new mongoose.Schema(
     },
     initiatedBy: {
       type: String,
-      required: true, // Identifies who initiated the transaction
+ 
     },
-    transactionHistory: [
+    initiaterId: {
+      type: String,
+     // required: true,
+    },
+    transactionHistory: [ 
       {
         transactionType: {
           type: String,
@@ -57,13 +61,15 @@ const transactionSchema = new mongoose.Schema(
         },
         initiatedBy: {
           type: String,
-     
+        },
+        initiaterId: {
+          type: String,
         },
       },
     ],
     outstandingBalance: {
       type: Number,
-      default: 0, 
+      default: 0,
     },
   },
   { timestamps: true }
