@@ -12,7 +12,6 @@ const {
 const authenticate =require("../../middleware/authMiddleware")
 // Route to create a new transaction
 router.post("/create-transactions",authenticate,createTransaction);
-
 // Route to fetch transactions for a user or client
 router.get("/transactions",authenticate, getTransactions);
 router.get("/client-transactions", authenticate, getTransactionstoclient);

@@ -125,9 +125,7 @@ const History = () => {
               <th className="border border-gray-300 px-4 py-2">Amount</th>
               <th className="border border-gray-300 px-4 py-2">Description</th>
               <th className="border border-gray-300 px-4 py-2">Date</th>
-              <th className="border border-gray-300 px-4 py-2">
-                Outstanding Balance
-              </th>
+           
               <th className="border border-gray-300 px-4 py-2">Status</th>
               <th className="border border-gray-300 px-4 py-2">Action</th>
             </tr>
@@ -150,9 +148,7 @@ const History = () => {
                 <td className="border border-gray-300 px-4 py-2">
                   {new Date(history.transactionDate).toLocaleString()}
                 </td>
-                <td className="border border-gray-300 px-4 py-2">
-                  {history.outstandingBalance}
-                </td>
+             
                 <td className="border border-gray-300 px-4 py-2">
                   {history.confirmationStatus === "confirmed" ? (
                     <span className="text-green-600 font-semibold">

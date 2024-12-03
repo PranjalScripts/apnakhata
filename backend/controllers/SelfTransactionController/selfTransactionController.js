@@ -1,6 +1,6 @@
 const Transaction = require("../../models/transactionModel/transactionModel");
 
-exports.createCollabTransaction = async (req, res) => {
+exports.createTransaction = async (req, res) => {
   try {
     const { bookId, clientUserId, transactionType, amount, description } =
       req.body;
@@ -94,7 +94,7 @@ exports.createCollabTransaction = async (req, res) => {
 };
 
 // Get a transaction by ID
-exports.getCollabTransactionById = async (req, res) => {
+exports.getTransactionById = async (req, res) => {
   try {
     const { id } = req.params;
     const transaction = await Transaction.findById(id);
@@ -120,7 +120,7 @@ exports.getCollabTransactionById = async (req, res) => {
 };
 
 // Get all transactions for a specific user
-exports.getCollabTransactions = async (req, res) => {
+exports.getTransactions = async (req, res) => {
   try {
     const { userId } = req.params;
     const transactions = await Transaction.find({ userId });
@@ -146,7 +146,7 @@ exports.getCollabTransactions = async (req, res) => {
 };
 
 // Update an existing transaction (for example, adjusting the amount or description)
-exports.CollabupdateTransaction = async (req, res) => {
+exports.updateTransaction = async (req, res) => {
   try {
     const { id } = req.params;
     const { transactionType, amount, description } = req.body;
@@ -197,7 +197,7 @@ exports.CollabupdateTransaction = async (req, res) => {
 };
 
 // Delete a transaction
-exports.deleteCollabTransaction = async (req, res) => {
+exports.deleteTransaction = async (req, res) => {
   try {
     const { id } = req.params;
     const transaction = await Transaction.findByIdAndDelete(id);

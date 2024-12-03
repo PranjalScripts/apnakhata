@@ -12,7 +12,7 @@ const CollaborativeBookRecords = () => {
     description: "",
   });
   const [isSubmitting, setIsSubmitting] = useState(false);
-
+  const userId = localStorage.getItem("userId");
   useEffect(() => {
     const fetchTransaction = async () => {
       const token = localStorage.getItem("token");
@@ -165,7 +165,7 @@ const CollaborativeBookRecords = () => {
             </tr>
             <tr>
               <td className="px-4 py-2 font-medium text-gray-700">User Name</td>
-              <td className="px-4 py-2">{transaction.userId.name}</td>
+              <td className="px-4 py-2">{transaction.userId}</td>
             </tr>
             <tr className="border-t border-gray-200">
               <td className="px-4 py-2 font-medium text-gray-700">
@@ -265,6 +265,9 @@ const CollaborativeBookRecords = () => {
           <thead>
             <tr className="border-b border-gray-200">
               <th className="px-4 py-2 text-left text-gray-700">
+                Initiated By
+              </th>
+              <th className="px-4 py-2 text-left text-gray-700">
                 Transaction Type
               </th>
               <th className="px-4 py-2 text-left text-gray-700">Amount</th>
@@ -280,27 +283,30 @@ const CollaborativeBookRecords = () => {
             {transaction.transactionHistory?.length > 0 ? (
               transaction.transactionHistory.map((history) => (
                 <tr key={history._id} className="border-b border-gray-200">
+                  <td className="px-4 py-2">{history.initiatedBy}</td>
+
                   <td className="px-4 py-2">{history.transactionType}</td>
                   <td className="px-4 py-2">{history.amount.toFixed(2)}</td>
                   <td className="px-4 py-2">{history.description}</td>
-                  <td className="px-4 py-2">
-                    {new Date(history.createdAt).toLocaleDateString()}
+                  <td className="border border-gray-300 px-4 py-2">
+                    {new Date(history.transactionDate).toLocaleString()}
                   </td>
                   <td className="px-4 py-2">{history.confirmationStatus}</td>
                   <td className="px-4 py-2">
-                    {history.confirmationStatus === "pending" && (
-                      <button
-                        onClick={() => updateTransactionStatus(history._id)}
-                        disabled={updatingEntryId === history._id}
-                        className={`px-4 py-2 bg-blue-500 text-white font-semibold rounded-lg hover:bg-blue-600 ${
-                          updatingEntryId === history._id ? "opacity-50" : ""
-                        }`}
-                      >
-                        {updatingEntryId === history._id
-                          ? "Updating..."
-                          : "Confirm"}
-                      </button>
-                    )}
+                    {history.confirmationStatus === "pending" &&
+                     userId !== history.initiaterId && (
+                        <button
+                          onClick={() => updateTransactionStatus(history._id)}
+                          disabled={updatingEntryId === history._id}
+                          className={`px-4 py-2 bg-blue-500 text-white font-semibold rounded-lg hover:bg-blue-600 ${
+                            updatingEntryId === history._id ? "opacity-50" : ""
+                          }`}
+                        >
+                          {updatingEntryId === history._id
+                            ? "Updating..."
+                            : "Confirm"}
+                        </button>
+                      )}
                   </td>
                 </tr>
               ))
