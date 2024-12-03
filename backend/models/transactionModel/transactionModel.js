@@ -17,11 +17,6 @@ const transactionSchema = new mongoose.Schema(
       ref: "ClientUser",
       required: true,
     },
-    transactionType: {
-      type: String,
-      enum: ["you will get", "you will give"],
-      required: true,
-    },
     file: {
       type: String,
     },

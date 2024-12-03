@@ -6,6 +6,7 @@ const {
   confirmTransaction,
   getTransactionstoclient,
   getTransactionById,
+  addExistingTransaction,
 } = require("../../controllers/collaborativeBookController/collaborativeBookController"); // Adjust path if necessary
 
 const authenticate =require("../../middleware/authMiddleware")
@@ -23,4 +24,7 @@ router.patch(
   confirmTransaction
 );
 
+router.post("/transactions/:transactionId/add",authenticate, addExistingTransaction);
+
 module.exports = router;
+ 

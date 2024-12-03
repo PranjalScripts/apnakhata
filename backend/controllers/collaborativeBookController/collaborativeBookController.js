@@ -2,15 +2,13 @@ const Transaction = require("../../models/transactionModel/transactionModel");
 const Client = require("../../models/clientUserModel/clientUserModel");
 const User = require("../../models/userModel/userModel");
 // Fetch transactions for a user or client
- const getTransactions = async (req, res) => {
+const getTransactions = async (req, res) => {
   try {
     // Assuming the client/user is logged in and their ID is available via the session or token
     const loggedInUserId = req.user.id; // Get from req.user if authenticated via JWT or session
 
     const transactions = await Transaction.find({
-      
-         userId: loggedInUserId   
-       
+      userId: loggedInUserId,
     })
       .populate("userId clientUserId bookId") // Populate related user, client, and book details
       .lean({ virtuals: true }); // Include virtual fields like `visibleTransactionType`
@@ -45,10 +43,8 @@ const getTransactionstoclient = async (req, res) => {
 
     // Step 3: Query the Transaction model to get transactions for this user/client
     const transactions = await Transaction.find({
-      
-         // Match transaction where the user is involved
-         clientUserId: client._id  // Match transaction where the client is involved
-      
+      // Match transaction where the user is involved
+      clientUserId: client._id, // Match transaction where the client is involved
     })
       .populate("userId clientUserId bookId") // Populate related user, client, and book details
       .lean(); // Returns plain JavaScript objects (without Mongoose's internal properties)
@@ -63,8 +59,6 @@ const getTransactionstoclient = async (req, res) => {
     res.status(500).json({ error: error.message });
   }
 };
-
-
 
 // const createTransaction = async (req, res) => {
 //   try {
@@ -185,16 +179,15 @@ const createTransaction = async (req, res) => {
   try {
     const {
       bookId,
-     
+
       clientUserId,
       transactionType,
       amount,
       description,
-      
-     } = req.body;
-    const userId = req.user.id; // Get the user ID from the authenticated user 
+    } = req.body;
+    const userId = req.user.id; // Get the user ID from the authenticated user
     const initiatedBy = req.user.name; // Get the user name from the authenticated user
-    const initiaterId=req.user.id;
+    const initiaterId = req.user.id;
     // Validate input
     if (
       !bookId ||
@@ -263,7 +256,7 @@ const createTransaction = async (req, res) => {
             amount,
             description,
             initiatedBy: req.user.name,
-            initiaterId:req.user.id,
+            initiaterId: req.user.id,
             transactionDate: new Date(),
             outstandingBalance: 0, // Initially 0 until confirmation
             confirmationStatus: "pending",
@@ -288,9 +281,8 @@ const createTransaction = async (req, res) => {
 
 const confirmTransaction = async (req, res) => {
   try {
-       
     const { transactionId, entryId } = req.params;
-    console.log(req.params) ;
+    console.log(req.params);
     const transaction = await Transaction.findById(transactionId);
     if (!transaction) {
       return res.status(404).json({ message: "Transaction not found." });
@@ -300,7 +292,7 @@ const confirmTransaction = async (req, res) => {
     const entryIndex = transaction.transactionHistory.findIndex(
       (entry) => entry._id.toString() === entryId
     );
- 
+
     if (entryIndex === -1) {
       return res.status(404).json({ message: "Transaction entry not found." });
     }
@@ -310,16 +302,14 @@ const confirmTransaction = async (req, res) => {
 
     // Check if the entry is pending
     if (pendingEntry.confirmationStatus !== "pending") {
-      return res
-        .status(400)
-        .json({
-          message: "This transaction entry has already been confirmed.",
-        });
+      return res.status(400).json({
+        message: "This transaction entry has already been confirmed.",
+      });
     }
 
     // Mark this entry as confirmed
     pendingEntry.confirmationStatus = "confirmed";
- 
+
     // Recalculate the outstanding balance based on all confirmed entries
     let newOutstandingBalance = 0;
 
@@ -339,15 +329,13 @@ const confirmTransaction = async (req, res) => {
     // Save the updated transaction
     await transaction.save();
 
-    res.status(200)
+    res
+      .status(200)
       .json({ message: "Transaction entry confirmed.", transaction });
   } catch (error) {
     res.status(500).json({ error: error.message });
   }
 };
-
-
-
 
 const getTransactionById = async (req, res) => {
   try {
@@ -374,6 +362,91 @@ const getTransactionById = async (req, res) => {
   }
 };
 
+/**
+ * Add a transaction to an existing transaction document.
+ * @param {Object} req - The request object containing transaction ID and new transaction details.
+ * @param {Object} res - The response object to send the result or error.
+ */
+const addExistingTransaction = async (req, res) => {
+  try {
+    const transactionId = req.params.transactionId;
+    // Extract transaction ID from request params
+    console.log("transaction id issssssss here", transactionId);
+    console.log("transaction id is here", req.params.transactionId);
+    const {
+      transactionType,
+      amount,
+      description,
+      confirmationStatus = "pending", // Default to pending if not provided
+    } = req.body; // Extract new transaction details from request body
+    const userId = req.user.id; // Get the user ID from the authenticated user
+    const initiatedBy = req.user.name; // Get the user name from the authenticated user
+    const initiaterId = req.user.id; // Get the user ID from the authenticated user
+
+    // Validate required fields
+    if (!transactionId || !transactionType || !amount) {
+      return res.status(400).json({
+        success: false,
+        message: "Transaction ID, type, and amount are required",
+      });
+    }
+
+    // Find the transaction document by ID
+    const transaction = await Transaction.findById(transactionId);
+
+    if (!transaction) {
+      return res.status(404).json({
+        success: false,
+        message: "Transaction not found",
+      });
+    }
+
+    const lastOutstandingBalance = transaction.outstandingBalance;
+
+    // Prepare the new transaction entry
+    const newTransaction = {
+      transactionType,
+      amount,
+      description,
+      confirmationStatus,
+      initiatedBy,
+      initiaterId,
+      outstandingBalance: lastOutstandingBalance, // Set the current outstanding balance
+      transactionDate: new Date(),
+    };
+
+    // Append the new transaction to the transaction history
+    transaction.transactionHistory.push(newTransaction);
+
+    // Update outstanding balance only if the transaction is confirmed
+    if (confirmationStatus === "confirmed") {
+      if (transactionType === "you will get") {
+        transaction.outstandingBalance += amount;
+      } else if (transactionType === "you will give") {
+        transaction.outstandingBalance -= amount;
+      }
+    }
+
+    // Save the updated transaction document
+    const updatedTransaction = await transaction.save();
+
+    // Send the updated transaction back in the response
+    res.status(200).json({
+      success: true,
+      message: "Transaction added successfully",
+      transaction: updatedTransaction,
+    });
+  } catch (error) {
+    console.error("Error adding transaction:", error);
+
+    // Handle any unexpected errors
+    res.status(500).json({
+      success: false,
+      message: "An error occurred while adding the transaction",
+      error: error.message,
+    });
+  }
+};
 
 module.exports = {
   getTransactions,
@@ -381,4 +454,5 @@ module.exports = {
   confirmTransaction,
   getTransactionstoclient,
   getTransactionById,
+  addExistingTransaction,
 };
