@@ -276,6 +276,7 @@ import TransactionDetails from "./TransactionDetails";
 import axios from "axios";
 
 const Dashboard = () => {
+  //eslint-disable-next-line
   const [data,setData] = useState([]);
   const [totalBalance, setTotalBalance] = useState(0);
   const [totalCredit, setTotalCredit] = useState(0);

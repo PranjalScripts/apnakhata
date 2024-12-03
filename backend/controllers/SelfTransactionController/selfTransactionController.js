@@ -1,12 +1,11 @@
-const Transaction = require("../../models/transactionModel/transactionModel");
+const Transaction = require("../../models/transactionModel/selfRecordModel");
 
 exports.createTransaction = async (req, res) => {
   try {
     const { bookId, clientUserId, transactionType, amount, description } =
       req.body;
     const userId = req.user.id;
-
-    // Check if a transaction already exists for the same user, client, and book
+    // Check if a transaction already exists for the same user and client
     let transaction = await Transaction.findOne({
       userId,
       clientUserId,
@@ -14,10 +13,6 @@ exports.createTransaction = async (req, res) => {
     });
 
     if (transaction) {
-      console.log(
-        `Transaction found for userId: ${userId}, clientUserId: ${clientUserId}, bookId: ${bookId}`
-      );
-
       // Calculate the new outstanding balance based on the transaction type
       let newOutstandingBalance = transaction.outstandingBalance;
 
@@ -50,9 +45,6 @@ exports.createTransaction = async (req, res) => {
       });
     }
 
-    // Log to confirm no existing transaction is found for this book
-    console.log(`No existing transaction found for bookId: ${bookId}`);
-
     // If no existing transaction, create a new one
     const newTransaction = new Transaction({
       bookId,
@@ -84,10 +76,9 @@ exports.createTransaction = async (req, res) => {
       data: newTransaction,
     });
   } catch (error) {
-    console.error("Error creating transaction:", error);
     res.status(500).json({
       success: false,
-      message: "Internal server error",
+      message: "An error occurred while processing the transaction.",
       error: error.message,
     });
   }
@@ -221,3 +212,31 @@ exports.deleteTransaction = async (req, res) => {
     });
   }
 };
+ 
+ exports.getTransactionsByBookId = async (req, res) => {
+  const { bookId } = req.params;
+
+  try {
+    // Validate bookId
+    if (!bookId) {
+      return res.status(400).json({ message: "Book ID is required." });
+    }
+
+    // Find transactions with the given bookId
+    const transactions = await Transaction.find({ bookId })
+      .populate("userId", "name email") // Populate user details
+      .populate("clientUserId", "name email") // Populate client user details
+      .sort({ createdAt: -1 }); // Sort by creation date (most recent first)
+
+    if (!transactions || transactions.length === 0) {
+      return res.status(404).json({ message: "No transactions found for this book ID." });
+    }
+
+    res.status(200).json({ success: true, transactions });
+  } catch (error) {
+    console.error("Error fetching transactions:", error);
+    res.status(500).json({ message: "An error occurred while fetching transactions.", error: error.message });
+  }
+};
+
+ 

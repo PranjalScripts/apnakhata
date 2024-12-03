@@ -52,7 +52,7 @@ const Sidebar = () => {
             </a>
           </li>
           <li className="hover:bg-gray-200">
-            <a href="/book" className="flex items-center px-4 py-3 space-x-4">
+            <a href="/your-books" className="flex items-center px-4 py-3 space-x-4">
               <FaFileInvoiceDollar />
               <span>Self Records</span>
             </a>

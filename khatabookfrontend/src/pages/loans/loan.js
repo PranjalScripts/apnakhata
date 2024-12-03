@@ -1,6 +1,5 @@
 import React from "react";
-import Sidebar from "../Layout/sidebar";
-const loan = () => {
+ const loan = () => {
   return (
     <div className="d-flex" style={{ "padding-left": "0" }}>
       

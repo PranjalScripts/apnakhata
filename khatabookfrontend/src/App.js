@@ -8,7 +8,6 @@ import { BrowserRouter as Router, Routes, Route } from "react-router-dom";
 import Login from "./components/auth/login/login";
 import Signup from "./components/auth/login/signup";
 import Dashboard from "./pages/Dashboard/dashboard";
-import SelfRecord from "./pages/selfRecord/selfrecord";
 import Book from "./pages/books/book";
 import Users from "./pages/clientUsers/clientUsers";
 import Profile from "./pages/profile/userprofile";
@@ -17,11 +16,12 @@ import Loans from "./pages/loans/loan";
 import Invoice from "./pages/invoice/invoice";
 import CollaborativeBook from "./pages/collaborativeBook/youWereAdded/collaborativeBook";
 import Layout from "./pages/Layout/Layout";
-import TransactionHistory from "./pages/selfRecord/TransactionHistory";
 import CollaborativeBookRecords from "./pages/collaborativeBook/youWereAdded/CollaborativeBookRecords";
 import YouAdded from "./pages/collaborativeBook/youAdded/YouAdded";
 import History from "./pages/collaborativeBook/youAdded/history";
 import AddTransactions from "./pages/collaborativeBook/youAdded/AddTransactions";
+import SelfRecord from "./pages/selfRecord/Selfrecord";
+import YourBooks from "./pages/selfRecord/yourBooks";
 
 function App() {
   return (
@@ -33,9 +33,9 @@ function App() {
         {/* Dashboard and other pages using Layout */}
         <Route path="/" element={<Layout />}>
           <Route path="dashboard" element={<Dashboard />} />
+          <Route path="your-books" element={<YourBooks/>} />
           <Route path="users" element={<Users />} />
-          <Route path="selfrecord" element={<SelfRecord />} />
-          <Route path="book" element={<Book />} />
+           <Route path="book" element={<Book />} />
           <Route path="profile" element={<Profile />} />
           <Route path="loans" element={<Loans />} />
           <Route path="invoice" element={<Invoice />} />
