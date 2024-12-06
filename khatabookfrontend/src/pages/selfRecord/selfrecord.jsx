@@ -185,5 +185,4 @@ const SelfRecord = () => {
     </div>
   );
 };
-
 export default SelfRecord;

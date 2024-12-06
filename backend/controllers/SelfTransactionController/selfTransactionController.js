@@ -225,7 +225,7 @@ exports.deleteTransaction = async (req, res) => {
     // Find transactions with the given bookId
     const transactions = await Transaction.find({ bookId })
       .populate("userId", "name email") // Populate user details
-      .populate("clientUserId", "name email") // Populate client user details
+      .populate("clientUserId", "name email mobile") // Populate client user details
       .sort({ createdAt: -1 }); // Sort by creation date (most recent first)
 
     if (!transactions || transactions.length === 0) {

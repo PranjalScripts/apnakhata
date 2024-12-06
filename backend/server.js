@@ -39,11 +39,8 @@ app.use("/api/v4/transaction", selftransactionRoutes);
  
 app.get("/", (req, res) => { res.send("<h1> Welcome to the Expense Management API</h1>") });
 
- 
 //port
 const PORT = 5100 || process.env.PORT;
-
-
 
 //listen server
 app.listen(PORT, () => {

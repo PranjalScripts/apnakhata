@@ -172,7 +172,19 @@ const CollaborativeBookRecords = () => {
                 Outstanding Balance
               </td>
               <td className="px-4 py-2">
-                {transaction.outstandingBalance.toFixed(2)}
+                <span
+                  className={`${
+                    userId === transaction.initiaterId
+                      ? transaction.outstandingBalance> 0
+                        ? "text-green-500"
+                        : "text-red-500"
+                      : transaction.outstandingBalance > 0
+                      ? "text-red-500"
+                      : "text-green-500"
+                  }`}
+                >
+                  {Math.abs(transaction.outstandingBalance).toFixed(2)}
+                </span>
               </td>
             </tr>
           </tbody>
@@ -285,7 +297,14 @@ const CollaborativeBookRecords = () => {
                 <tr key={history._id} className="border-b border-gray-200">
                   <td className="px-4 py-2">{history.initiatedBy}</td>
 
-                  <td className="px-4 py-2">{history.transactionType}</td>
+                  <td className="px-4 py-2">
+                    {userId === history.initiaterId
+                      ? history.transactionType // Show the actual transaction type if user is the initiator
+                      : history.transactionType === "you will give"
+                      ? "You will get" // If the user is not the initiator, swap "you will give" to "you will get"
+                      : "You will give"}{" "}
+                  </td>
+
                   <td className="px-4 py-2">{history.amount.toFixed(2)}</td>
                   <td className="px-4 py-2">{history.description}</td>
                   <td className="border border-gray-300 px-4 py-2">
@@ -294,7 +313,7 @@ const CollaborativeBookRecords = () => {
                   <td className="px-4 py-2">{history.confirmationStatus}</td>
                   <td className="px-4 py-2">
                     {history.confirmationStatus === "pending" &&
-                     userId !== history.initiaterId && (
+                      userId !== history.initiaterId && (
                         <button
                           onClick={() => updateTransactionStatus(history._id)}
                           disabled={updatingEntryId === history._id}

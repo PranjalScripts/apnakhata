@@ -38,6 +38,6 @@ router.delete(
   transactionController.deleteTransaction
 );
 
-router.get("/get-transactions/:bookId", authenticate, transactionController.getTransactionsByBookId);
+router.get("/getbook-transactions/:bookId", authenticate, transactionController.getTransactionsByBookId);
 module.exports = router;
   

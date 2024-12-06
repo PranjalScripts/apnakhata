@@ -21,6 +21,7 @@
     "morgan": "^1.10.0",
     "nodemailer": "^6.9.16",
     "nodemon": "^3.1.7",
+    "notificationapi-node-server-sdk": "^2.2.1",
     "token": "^0.1.0",
     "web": "^0.0.2"
   }

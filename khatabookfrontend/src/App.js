@@ -4,10 +4,9 @@ import "./App.css";
 import { ToastContainer } from "react-toastify";
 import "react-toastify/dist/ReactToastify.css";
 import { BrowserRouter as Router, Routes, Route } from "react-router-dom";
-
 import Login from "./components/auth/login/login";
 import Signup from "./components/auth/login/signup";
-import Dashboard from "./pages/Dashboard/dashboard";
+import Home from "./pages/Home/Home";
 import Book from "./pages/books/book";
 import Users from "./pages/clientUsers/clientUsers";
 import Profile from "./pages/profile/userprofile";
@@ -20,8 +19,11 @@ import CollaborativeBookRecords from "./pages/collaborativeBook/youWereAdded/Col
 import YouAdded from "./pages/collaborativeBook/youAdded/YouAdded";
 import History from "./pages/collaborativeBook/youAdded/history";
 import AddTransactions from "./pages/collaborativeBook/youAdded/AddTransactions";
-import SelfRecord from "./pages/selfRecord/Selfrecord";
 import YourBooks from "./pages/selfRecord/yourBooks";
+import SelfRecordByBookID from "./pages/selfRecord/selfrecordbyBookID";
+import TransactionHistory from "./pages/selfRecord/history";
+import PageNotFound from "./pages/pageNotFound/PageNotFound"
+import Dashboard from "./pages/DashBoard/DashBoard";
 
 function App() {
   return (
@@ -32,17 +34,23 @@ function App() {
 
         {/* Dashboard and other pages using Layout */}
         <Route path="/" element={<Layout />}>
+          <Route path="home" element={<Home />} />
           <Route path="dashboard" element={<Dashboard />} />
-          <Route path="your-books" element={<YourBooks/>} />
+          <Route path="your-books" element={<YourBooks />} />
+          <Route path="/your-books/:bookId" element={<SelfRecordByBookID />} />
+          <Route
+            path="transaction-history/:transactionId"
+            element={<TransactionHistory />}
+          />
           <Route path="users" element={<Users />} />
-           <Route path="book" element={<Book />} />
+          <Route path="book" element={<Book />} />
           <Route path="profile" element={<Profile />} />
           <Route path="loans" element={<Loans />} />
           <Route path="invoice" element={<Invoice />} />
           <Route path="collaborativebook" element={<CollaborativeBook />} />
           <Route path="youadded" element={<YouAdded />} />
           <Route path="/history/:transactionId" element={<History />} />
-          <Route path="/addtransaction" element={<AddTransactions/> } />
+          <Route path="/addtransaction" element={<AddTransactions />} />
           <Route
             path="/transaction-details/:transactionId"
             element={<CollaborativeBookRecords />}
@@ -52,11 +60,12 @@ function App() {
         {/* Auth pages */}
         <Route path="/login" element={<Login />} />
         <Route path="/signup" element={<Signup />} />
+        <Route path="*" element={<PageNotFound />} />
       </Routes>
 
       <ToastContainer position="top-right" autoClose={3000} hideProgressBar />
     </Router>
   );
 }
-
+ 
 export default App;

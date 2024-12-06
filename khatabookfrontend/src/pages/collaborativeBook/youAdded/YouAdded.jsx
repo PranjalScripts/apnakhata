@@ -113,12 +113,12 @@ const handleTransaction = () => {
             </tbody>
           </table>
 
-          <button
+          {/* <button
             onClick={handleTransaction}
             className="bg-blue-500 text-white px-6 py-2 rounded-lg hover:bg-blue-600"
           >
             Add Transaction
-          </button>
+          </button> */}
         </div>
       )}{" "}
     </div>

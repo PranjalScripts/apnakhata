@@ -1,6 +1,11 @@
 const Transaction = require("../../models/transactionModel/transactionModel");
 const Client = require("../../models/clientUserModel/clientUserModel");
 const User = require("../../models/userModel/userModel");
+const notificationapi = require("notificationapi-node-server-sdk").default;
+require("dotenv").config();
+
+ notificationapi.init(process.env.clientId, process.env.clientSecret);
+
 // Fetch transactions for a user or client
 const getTransactions = async (req, res) => {
   try {
@@ -46,7 +51,11 @@ const getTransactionstoclient = async (req, res) => {
       // Match transaction where the user is involved
       clientUserId: client._id, // Match transaction where the client is involved
     })
-      .populate("userId clientUserId bookId") // Populate related user, client, and book details
+      .populate({
+        path: "userId",
+        select: "-password", // Exclude the password field
+      })
+      .populate("clientUserId bookId") // Populate related user, client, and book details
       .lean(); // Returns plain JavaScript objects (without Mongoose's internal properties)
 
     if (transactions.length === 0) {
@@ -59,135 +68,18 @@ const getTransactionstoclient = async (req, res) => {
     res.status(500).json({ error: error.message });
   }
 };
-
-// const createTransaction = async (req, res) => {
-//   try {
-//     const {
-//       bookId,
-//       clientUserId,
-//       transactionType,
-//       amount,
-//       description,
-//       initiatedBy,
-//     } = req.body;
-// const userId = req.user.id; // Get the user ID from the authenticated user
-//     // Validate input
-//     if (
-//       !bookId ||
-//       !userId ||
-//       !clientUserId ||
-//       !transactionType ||
-//       !amount ||
-//       !description
-//     ) {
-//       return res.status(400).json({ message: "Missing required fields" });
-//     }
-
-//     // Check if a transaction already exists for the same client, book, and user
-//     let existingTransaction = await Transaction.findOne({
-//       bookId,
-//       userId,
-//       clientUserId,
-//     });
-
-//     if (existingTransaction) {
-//       // If the transaction exists, we update the transaction history
-//       const lastHistory =
-//         existingTransaction.transactionHistory[
-//           existingTransaction.transactionHistory.length - 1
-//         ];
-
-//   {
-//         // Add new history entry
-//         existingTransaction.transactionHistory.push({
-//           transactionType,
-//           amount,
-//           description,
-//           transactionDate: new Date(),
-//           outstandingBalance: existingTransaction.outstandingBalance, // Use current outstanding balance
-//           confirmationStatus: "pending", // Default status for new transactions
-//         });
-//       }
-
-//       // Calculate the outstanding balance only if there are no pending transactions
-//       const hasPendingTransaction = existingTransaction.transactionHistory.some(
-//         (entry) => entry.confirmationStatus === "pending"
-//       );
-
-//       if (!hasPendingTransaction) {
-//         // Update outstanding balance after confirming all entries
-//         let newOutstandingBalance = 0;
-
-//         // Calculate the outstanding balance based on transaction history
-//         existingTransaction.transactionHistory.forEach((entry) => {
-//           if (entry.transactionType === "you will get") {
-//             newOutstandingBalance += entry.amount;
-//           } else if (entry.transactionType === "you will give") {
-//             newOutstandingBalance -= entry.amount;
-//           }
-//         });
-
-//         // Set the new outstanding balance
-//         existingTransaction.outstandingBalance = newOutstandingBalance;
-//       }
-
-//       // Save the updated transaction
-//       await existingTransaction.save();
-
-//       return res.status(200).json({
-//         message: "Transaction updated successfully.",
-//         transaction: existingTransaction,
-//       });
-//     } else {
-//       // Create a new transaction if no existing transaction is found
-//       const newTransaction = new Transaction({
-//         bookId,
-//         userId,
-//         clientUserId,
-//         transactionType,
-//         initiatedBy,
-//         amount, // Include the amount field
-//         description, // Description
-//         transactionHistory: [
-//           {
-//             transactionType,
-//             amount, // Store the amount in transactionHistory
-//             description,
-//             transactionDate: new Date(),
-//             outstandingBalance: 0, // Initially, set the outstanding balance to 0
-//             confirmationStatus: "pending", // Default confirmation status
-//           },
-//         ],
-//         outstandingBalance: 0, // Initialize the outstanding balance to 0
-//       });
-
-//       // Save the new transaction
-//       const savedTransaction = await newTransaction.save();
-
-//       return res.status(201).json({
-//         message: "Transaction created successfully.",
-//         transaction: savedTransaction,
-//       });
-//     }
-//   } catch (error) {
-//     console.error(error); // Log the error for debugging
-//     res.status(500).json({ error: error.message });
-//   }
-// };
+ 
+// Initialize notification API
 
 const createTransaction = async (req, res) => {
   try {
-    const {
-      bookId,
+    const { bookId, clientUserId, transactionType, amount, description } =
+      req.body;
 
-      clientUserId,
-      transactionType,
-      amount,
-      description,
-    } = req.body;
     const userId = req.user.id; // Get the user ID from the authenticated user
     const initiatedBy = req.user.name; // Get the user name from the authenticated user
     const initiaterId = req.user.id;
+
     // Validate input
     if (
       !bookId ||
@@ -196,8 +88,8 @@ const createTransaction = async (req, res) => {
       !transactionType ||
       !amount ||
       !initiatedBy ||
-      !initiaterId ||
-      !description
+      !initiaterId
+      
     ) {
       return res.status(400).json({ message: "Missing required fields." });
     }
@@ -221,6 +113,7 @@ const createTransaction = async (req, res) => {
       clientUserId,
     });
 
+    let transaction;
     if (existingTransaction) {
       // Update transaction history
       existingTransaction.transactionHistory.push({
@@ -235,11 +128,11 @@ const createTransaction = async (req, res) => {
       });
 
       // Save the updated transaction
-      await existingTransaction.save();
+      transaction = await existingTransaction.save();
 
-      return res.status(200).json({
+      res.status(200).json({
         message: "Transaction updated successfully.",
-        transaction: existingTransaction,
+        transaction,
       });
     } else {
       // Create a new transaction
@@ -266,18 +159,52 @@ const createTransaction = async (req, res) => {
       });
 
       // Save the new transaction
-      const savedTransaction = await newTransaction.save();
+      transaction = await newTransaction.save();
 
-      return res.status(201).json({
+      res.status(201).json({
         message: "Transaction created successfully.",
-        transaction: savedTransaction,
+        transaction,
       });
+    }
+
+    // Fetch the client's email and phone number from the Client model
+    const client = await Client.findById(clientUserId); // Assuming clientUserId is the client's unique ID
+
+    if (!client) {
+      return res.status(404).json({
+        message: "Client not found",
+      });
+    }
+
+    // Trigger notification
+    const notificationData = {
+      notificationId: "apnakhata_63_07",
+      user: {
+        id: clientUserId, // User ID or unique identifier
+        email: client.email, // Provide the client's email from the client model
+        number: client.mobile, // Provide the client's phone number from the client model
+      },
+      mergeTags: {
+        transactionType,
+        amount: amount.toFixed(2),
+        description,
+        initiatedBy,
+        date: new Date().toLocaleDateString(),
+      },
+    };
+
+    try {
+      await notificationapi.send(notificationData);
+      console.log("Notification sent successfully!");
+    } catch (notifyError) {
+      console.error("Error sending notification:", notifyError);
     }
   } catch (error) {
     console.error(error); // Log the error for debugging
     res.status(500).json({ error: error.message });
   }
 };
+
 
 const confirmTransaction = async (req, res) => {
   try {
@@ -362,23 +289,23 @@ const getTransactionById = async (req, res) => {
   }
 };
 
-/**
- * Add a transaction to an existing transaction document.
- * @param {Object} req - The request object containing transaction ID and new transaction details.
- * @param {Object} res - The response object to send the result or error.
- */
+ 
+
+// Initialize notification API
+ 
+
 const addExistingTransaction = async (req, res) => {
   try {
     const transactionId = req.params.transactionId;
-    // Extract transaction ID from request params
-    console.log("transaction id issssssss here", transactionId);
-    console.log("transaction id is here", req.params.transactionId);
+    console.log("transaction id is here", transactionId);
+
     const {
       transactionType,
       amount,
       description,
       confirmationStatus = "pending", // Default to pending if not provided
-    } = req.body; // Extract new transaction details from request body
+    } = req.body;
+
     const userId = req.user.id; // Get the user ID from the authenticated user
     const initiatedBy = req.user.name; // Get the user name from the authenticated user
     const initiaterId = req.user.id; // Get the user ID from the authenticated user
@@ -429,6 +356,7 @@ const addExistingTransaction = async (req, res) => {
 
     // Save the updated transaction document
     const updatedTransaction = await transaction.save();
+ 
 
     // Send the updated transaction back in the response
     res.status(200).json({
@@ -447,6 +375,7 @@ const addExistingTransaction = async (req, res) => {
     });
   }
 };
+
 
 module.exports = {
   getTransactions,

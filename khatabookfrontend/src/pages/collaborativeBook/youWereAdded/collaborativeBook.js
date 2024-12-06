@@ -33,11 +33,7 @@ const CollaborativeBook = () => {
 
   return (
     <div className="container mx-auto p-4">
-      <h1 className="text-2xl font-semibold mb-4">
-        Transaction Outstanding Balances
-      </h1>
-
-      {/* Conditionally render if there are no transactions */}
+     
       {transactions.length === 0 ? (
         <p className="text-center text-xl font-semibold text-gray-500">
           No records found

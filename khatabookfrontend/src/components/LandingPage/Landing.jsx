@@ -52,7 +52,7 @@ function Landing() {
       localStorage.setItem("token", token);
       localStorage.setItem("userId", user.id);
       toast.success("Login successful");
-      navigate("/dashboard");
+      navigate("/home");
     } catch (error) {
       toast.error(error.response?.data?.message || "Login failed");
     }
