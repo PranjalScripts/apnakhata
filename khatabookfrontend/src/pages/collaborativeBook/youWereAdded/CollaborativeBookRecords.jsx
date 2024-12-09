@@ -178,7 +178,7 @@ const CollaborativeBookRecords = () => {
                       ? transaction.outstandingBalance> 0
                         ? "text-green-500"
                         : "text-red-500"
-                      : transaction.outstandingBalance > 0
+                     : transaction.outstandingBalance > 0
                       ? "text-red-500"
                       : "text-green-500"
                   }`}
@@ -202,7 +202,7 @@ const CollaborativeBookRecords = () => {
             }));
           }}
         >
-          You Will Get
+          You Will Give
         </button>
         <button
           className="bg-red-500 text-white px-4 py-2 rounded hover:bg-red-600"
@@ -214,7 +214,7 @@ const CollaborativeBookRecords = () => {
             }));
           }}
         >
-          You Will Give
+          You Will Get
         </button>
       </div>
 
@@ -301,7 +301,7 @@ const CollaborativeBookRecords = () => {
                     {userId === history.initiaterId
                       ? history.transactionType // Show the actual transaction type if user is the initiator
                       : history.transactionType === "you will give"
-                      ? "You will get" // If the user is not the initiator, swap "you will give" to "you will get"
+                      ? "You will get" 
                       : "You will give"}{" "}
                   </td>
 

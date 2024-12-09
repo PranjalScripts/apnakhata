@@ -15,7 +15,11 @@ const getTransactions = async (req, res) => {
     const transactions = await Transaction.find({
       userId: loggedInUserId,
     })
-      .populate("userId clientUserId bookId") // Populate related user, client, and book details
+      .populate({
+        path: "userId",
+        select: "-password", // Exclude the password field
+      })
+      .populate("clientUserId bookId") // Populate related user, client, and book details
       .lean({ virtuals: true }); // Include virtual fields like `visibleTransactionType`
 
     if (transactions.length === 0) {
@@ -28,7 +32,7 @@ const getTransactions = async (req, res) => {
     res.status(500).json({ error: error.message });
   }
 };
-
+// Fetch transactions for a client
 const getTransactionstoclient = async (req, res) => {
   try {
     // Assuming the client/user is logged in and their ID is available via the session or token
@@ -68,10 +72,8 @@ const getTransactionstoclient = async (req, res) => {
     res.status(500).json({ error: error.message });
   }
 };
- 
-// Initialize notification API
-
-const createTransaction = async (req, res) => {
+// Create a new transaction
+  const createTransaction = async (req, res) => {
   try {
     const { bookId, clientUserId, transactionType, amount, description } =
       req.body;
@@ -205,7 +207,7 @@ const createTransaction = async (req, res) => {
   }
 };
 
-
+//  Confirm a pending transaction
 const confirmTransaction = async (req, res) => {
   try {
     const { transactionId, entryId } = req.params;
@@ -263,7 +265,7 @@ const confirmTransaction = async (req, res) => {
     res.status(500).json({ error: error.message });
   }
 };
-
+// Get a single transaction by ID
 const getTransactionById = async (req, res) => {
   try {
     const { id } = req.params;
@@ -288,12 +290,7 @@ const getTransactionById = async (req, res) => {
     });
   }
 };
-
- 
-
-// Initialize notification API
- 
-
+// Add an existing transaction to the transaction history
 const addExistingTransaction = async (req, res) => {
   try {
     const transactionId = req.params.transactionId;
@@ -376,6 +373,168 @@ const addExistingTransaction = async (req, res) => {
   }
 };
 
+const updateTransaction = async (req, res) => {
+  try {
+    const { transactionId, entryId } = req.params; // Transaction and entry IDs from URL params
+    const { amount, description, transactionType } = req.body; // Fields to update
+
+    const userId = req.user.id; // Get the user ID from the authenticated user
+
+    // Validate input
+    if (!transactionId || !entryId) {
+      return res
+        .status(400)
+        .json({ message: "Missing required transaction IDs." });
+    }
+
+    if (amount !== undefined && (typeof amount !== "number" || amount <= 0)) {
+      return res
+        .status(400)
+        .json({ message: "Amount must be a positive number." });
+    }
+
+    if (
+      transactionType &&
+      !["you will get", "you will give"].includes(transactionType)
+    ) {
+      return res
+        .status(400)
+        .json({ message: "Invalid transaction type provided." });
+    }
+
+    // Fetch the existing transaction
+    const transaction = await Transaction.findById(transactionId);
+
+    if (!transaction) {
+      return res.status(404).json({ message: "Transaction not found." });
+    }
+
+    // Find the specific transaction entry to update
+    const entry = transaction.transactionHistory.id(entryId);
+
+    if (!entry) {
+      return res.status(404).json({ message: "Transaction entry not found." });
+    }
+
+    // Prevent updates by users who did not initiate the entry
+    if (entry.initiaterId.toString() !== userId) {
+      return res
+        .status(403)
+        .json({
+          message: "You are not authorized to update this transaction.",
+        });
+    }
+
+    // Update the fields
+    if (amount !== undefined) entry.amount = amount;
+    if (description !== undefined) entry.description = description;
+    if (transactionType !== undefined) entry.transactionType = transactionType;
+
+    entry.transactionDate = new Date(); // Update transaction date to reflect changes
+    entry.confirmationStatus = "pending"; // Reset confirmation status to "pending" after updates
+
+    // Save the updated transaction
+    await transaction.save();
+
+    res.status(200).json({
+      message: "Transaction updated successfully.",
+      transaction,
+    });
+
+    // Send notification to the client about the update
+    const client = await Client.findById(transaction.clientUserId); // Assuming clientUserId is the client's unique ID
+
+    if (!client) {
+      return res.status(404).json({
+        message: "Client not found.",
+      });
+    }
+
+    const notificationData = {
+      notificationId: "apnakhata_63_07", // Update notification ID if necessary
+      user: {
+        id: transaction.clientUserId, // User ID or unique identifier
+        email: client.email, // Provide the client's email from the client model
+        number: client.mobile, // Provide the client's phone number from the client model
+      },
+      mergeTags: {
+        transactionType: entry.transactionType,
+        amount: entry.amount.toFixed(2),
+        description: entry.description,
+        initiatedBy: entry.initiatedBy,
+        date: new Date().toLocaleDateString(),
+      },
+    };
+
+    try {
+      await notificationapi.send(notificationData);
+      console.log("Update notification sent successfully!");
+    } catch (notifyError) {
+      console.error("Error sending update notification:", notifyError);
+    }
+  } catch (error) {
+    console.error("Error updating transaction:", error);
+    res.status(500).json({ error: error.message });
+  }
+}
+// Delete a transaction entry
+const deleteTransactionEntry = async (req, res) => {
+  try {
+    const { transactionId, entryId } = req.params;
+    const userId = req.user.id; // Get the authenticated user ID
+
+    // Find the transaction by ID
+    const transaction = await Transaction.findById(transactionId);
+
+    if (!transaction) {
+      return res.status(404).json({ message: "Transaction not found." });
+    }
+
+    // Check if the entry exists in the transaction history
+    const entryIndex = transaction.transactionHistory.findIndex(
+      (entry) => entry._id.toString() === entryId
+    );
+
+    if (entryIndex === -1) {
+      return res.status(404).json({ message: "Transaction entry not found." });
+    }
+
+    // Check if the user is the initiator of the entry
+    const entry = transaction.transactionHistory[entryIndex];
+    if (entry.initiaterId.toString() !== userId) {
+      return res.status(403).json({
+        message: "You are not authorized to delete this transaction entry.",
+      });
+    }
+
+    // Remove the entry from the transaction history
+    const [removedEntry] = transaction.transactionHistory.splice(entryIndex, 1);
+
+    // Update the outstanding balance
+    if (removedEntry.confirmationStatus === "confirmed") {
+      // If the removed entry was confirmed, adjust the outstanding balance
+      const adjustment =
+        removedEntry.transactionType === "you will get"
+          ? -removedEntry.amount // Decrease balance if it was "you will get"
+          : removedEntry.amount; // Increase balance if it was "you will give"
+
+      transaction.outstandingBalance += adjustment;
+    }
+
+    // Save the updated transaction
+    await transaction.save();
+
+    res.status(200).json({
+      message: "Transaction entry deleted successfully.",
+      transaction,
+    });
+  } catch (error) {
+    console.error("Error deleting transaction entry:", error);
+    res.status(500).json({ error: error.message });
+  }
+};
+
+
 
 module.exports = {
   getTransactions,
@@ -384,4 +543,6 @@ module.exports = {
   getTransactionstoclient,
   getTransactionById,
   addExistingTransaction,
+  updateTransaction,
+  deleteTransactionEntry,
 };

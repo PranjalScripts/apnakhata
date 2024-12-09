@@ -68,7 +68,7 @@ const Dashboard = () => {
             unconfirmedYouWillGet,
             unconfirmedYouWillGive,
             source: "client",
-            transactionId: transaction._id, // Get the transaction ID from clientTransactions
+            transactionId: transaction._id,  
           };
         });
 
@@ -132,9 +132,14 @@ const Dashboard = () => {
     fetchAllTransactions();
   }, []);
 
-  const viewTransactionDetails = (transactionId) => {
-    navigate(`/transaction-details/${transactionId}`); // Pass transactionId to the URL
-  };
+ const viewTransactionDetails = (transactionId, source) => {
+   if (source === "client") {
+     navigate(`/transaction-details/${transactionId}`); // For client source
+   } else {
+     navigate(`/history/${transactionId}`); // For other sources
+   }
+ };
+
 
   if (loading) {
     return (
@@ -208,7 +213,10 @@ const Dashboard = () => {
                   <td className="border border-gray-300 px-4 py-2">
                     <button
                       onClick={() =>
-                        viewTransactionDetails(transaction.transactionId)
+                        viewTransactionDetails(
+                          transaction.transactionId,
+                          transaction.source
+                        )
                       }
                     >
                       Click here
@@ -220,50 +228,8 @@ const Dashboard = () => {
           </table>
         </div>
       )}
-
-   
     </div>
   );
 };
 
 export default Dashboard;
-
-// import React, { useEffect, useState } from "react";
-// import { useNavigate } from "react-router-dom";
-// import { fetchAllTransactions } from "./api";
-// import Loading from "./Loading";
-// import EmptyState from "./EmptyState";
-// import TransactionTable from "./TransactionTable";
-
-// const Dashboard = () => {
-//   const [transactions, setTransactions] = useState([]);
-//   const [loading, setLoading] = useState(true);
-//   const navigate = useNavigate();
-
-//   useEffect(() => {
-//     const loadTransactions = async () => {
-//       try {
-//         const data = await fetchAllTransactions();
-//         setTransactions(data);
-//       } catch (error) {
-//         console.error("Error fetching transactions:", error);
-//       } finally {
-//         setLoading(false);
-//       }
-//     };
-
-//     loadTransactions();
-//   }, []);
-
-//   if (loading) return <Loading />;
-//   if (!transactions.length) return <EmptyState />;
-
-//   return (
-//     <div className="p-4 max-w-6xl mx-auto">
-//       <h1 className="text-2xl font-bold text-gray-800 mb-6">Transactions</h1>
-//       <TransactionTable transactions={transactions} viewTransactionDetails={viewTransactionDetails} />
-//     </div>
-//   );
-// };
-
-// export default Dashboard;

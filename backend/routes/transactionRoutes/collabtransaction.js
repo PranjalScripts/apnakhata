@@ -7,6 +7,8 @@ const {
   getTransactionstoclient,
   getTransactionById,
   addExistingTransaction,
+  updateTransaction,
+  deleteTransactionEntry,
 } = require("../../controllers/collaborativeBookController/collaborativeBookController"); // Adjust path if necessary
 
 const authenticate =require("../../middleware/authMiddleware")
@@ -22,7 +24,17 @@ router.patch(
   "/transactions/:transactionId/entries/:entryId/confirm",
   confirmTransaction
 );
+router.patch(
+  "/transactions/:transactionId/entries/:entryId",
+  authenticate, // Middleware to ensure the user is authenticated
+  updateTransaction // Controller to handle the update logic
+);
 
+router.delete(
+  "/transactions/:transactionId/entries/:entryId",
+  authenticate ,  
+  deleteTransactionEntry 
+);
 router.post("/transactions/:transactionId/add",authenticate, addExistingTransaction);
 
 module.exports = router;
