@@ -1,10 +1,12 @@
 import React, { useEffect, useState } from "react";
 import { useParams } from "react-router-dom";
-
+import { MdEdit, MdDelete } from "react-icons/md";
 const CollaborativeBookRecords = () => {
   const { transactionId } = useParams(); // Get transactionId from URL
   const [transaction, setTransaction] = useState(null);
   const [updatingEntryId, setUpdatingEntryId] = useState(null);
+ 
+  const [adding, setAdding] = useState(false);
   const [showForm, setShowForm] = useState(false);
   const [formData, setFormData] = useState({
     transactionType: "",
@@ -13,6 +15,13 @@ const CollaborativeBookRecords = () => {
   });
   const [isSubmitting, setIsSubmitting] = useState(false);
   const userId = localStorage.getItem("userId");
+  const [isEditing, setIsEditing] = useState(false);
+
+  const [editData, setEditData] = useState({
+    id: null,
+    amount: "",
+    transactionType: "",
+  });
   useEffect(() => {
     const fetchTransaction = async () => {
       const token = localStorage.getItem("token");
@@ -137,7 +146,90 @@ const CollaborativeBookRecords = () => {
       <div className="text-center py-10">Loading transaction details...</div>
     );
   }
+  const handleDelete = async (entryId) => {
+    const token = localStorage.getItem("token");
+    if (window.confirm("Are you sure you want to delete this transaction?")) {
+      try {
+        const response = await fetch(
+          `http://localhost:5100/api/collab-transactions/transactions/${transactionId}/entries/${entryId}`,
+          {
+            method: "DELETE",
+            headers: { Authorization: `Bearer ${token}` },
+          }
+        );
 
+        if (response.ok) {
+          setTransaction((prev) => ({
+            ...prev,
+            transactionHistory: prev.transactionHistory.filter(
+              (entry) => entry._id !== entryId
+            ),
+          }));
+          alert("Transaction deleted successfully!");
+        } else {
+          console.error("Failed to delete transaction.");
+          alert("Failed to delete transaction. Please try again.");
+        }
+      } catch (error) {
+        console.error("Error deleting transaction:", error);
+      }
+    }
+  };
+
+  const openEditForm = (entry) => {
+    setEditData({
+      id: entry._id,
+      amount: entry.amount,
+      transactionType: entry.transactionType,
+    });
+    setIsEditing(true);
+  };
+  const closeEditForm = () => {
+    setIsEditing(false);
+    setEditData({ id: null, amount: "", transactionType: "" });
+  };
+
+  const handleEditSubmit = async (e) => {
+    e.preventDefault();
+    const { id, amount, transactionType } = editData;
+
+    const token = localStorage.getItem("token");
+    const updatedData = {
+      amount: parseFloat(amount),
+      transactionType: transactionType.toLowerCase(),
+    };
+
+    try {
+      const response = await fetch(
+        `http://localhost:5100/api/collab-transactions/transactions/${transactionId}/entries/${id}`,
+        {
+          method: "PATCH",
+          headers: {
+            "Content-Type": "application/json",
+            Authorization: `Bearer ${token}`,
+          },
+          body: JSON.stringify(updatedData),
+        }
+      );
+
+      if (response.ok) {
+        const updatedEntry = await response.json();
+        setTransaction((prev) => ({
+          ...prev,
+          transactionHistory: prev.transactionHistory.map((history) =>
+            history._id === id ? { ...history, ...updatedEntry.data } : history
+          ),
+        }));
+        alert("Transaction updated successfully!");
+        closeEditForm();
+      } else {
+        alert("Failed to update the transaction. Please try again.");
+      }
+    } catch (error) {
+      console.error("Error updating transaction:", error);
+      alert("An error occurred while updating the transaction.");
+    }
+  };
   return (
     <div className="container mx-auto p-6 max-w-3xl">
       <h1 className="text-3xl font-semibold text-gray-800 mb-6">
@@ -175,10 +267,10 @@ const CollaborativeBookRecords = () => {
                 <span
                   className={`${
                     userId === transaction.initiaterId
-                      ? transaction.outstandingBalance> 0
+                      ? transaction.outstandingBalance > 0
                         ? "text-green-500"
                         : "text-red-500"
-                     : transaction.outstandingBalance > 0
+                      : transaction.outstandingBalance > 0
                       ? "text-red-500"
                       : "text-green-500"
                   }`}
@@ -301,7 +393,7 @@ const CollaborativeBookRecords = () => {
                     {userId === history.initiaterId
                       ? history.transactionType // Show the actual transaction type if user is the initiator
                       : history.transactionType === "you will give"
-                      ? "You will get" 
+                      ? "You will get"
                       : "You will give"}{" "}
                   </td>
 
@@ -310,22 +402,59 @@ const CollaborativeBookRecords = () => {
                   <td className="border border-gray-300 px-4 py-2">
                     {new Date(history.transactionDate).toLocaleString()}
                   </td>
-                  <td className="px-4 py-2">{history.confirmationStatus}</td>
-                  <td className="px-4 py-2">
-                    {history.confirmationStatus === "pending" &&
-                      userId !== history.initiaterId && (
+                  <td className="border border-gray-300 px-4 py-2">
+                    {history.confirmationStatus === "confirmed" ? (
+                      <span className="text-green-600 font-semibold">
+                        Confirmed
+                      </span>
+                    ) : userId === history.initiaterId ? (
+                      <span className="text-blue-600 font-semibold">
+                        Pending!
+                      </span>
+                    ) : (
+                      <button
+                        onClick={() => updateTransactionStatus(history._id)}
+                        disabled={updatingEntryId === history._id}
+                        className={`px-4 py-2 bg-blue-500 text-white font-semibold rounded-lg hover:bg-blue-600 ${
+                          updatingEntryId === history._id ? "opacity-50" : ""
+                        }`}
+                      >
+                        {updatingEntryId === history._id
+                          ? "Updating..."
+                          : "Confirm"}
+                      </button>
+                    )}
+                  </td>
+                  <td className="border border-gray-300 px-4 py-2">
+                    {userId === history.initiaterId ? (
+                      <>
+                        {/* Edit button */}
                         <button
-                          onClick={() => updateTransactionStatus(history._id)}
-                          disabled={updatingEntryId === history._id}
-                          className={`px-4 py-2 bg-blue-500 text-white font-semibold rounded-lg hover:bg-blue-600 ${
-                            updatingEntryId === history._id ? "opacity-50" : ""
-                          }`}
+                          onClick={() => openEditForm(history)}
+                          className="text-yellow-500 hover:text-yellow-600"
+                          title="Edit"
                         >
-                          {updatingEntryId === history._id
-                            ? "Updating..."
-                            : "Confirm"}
+                          <i className="text-xl">
+                            <MdEdit />
+                          </i>
                         </button>
-                      )}
+
+                        {/* Delete button */}
+                        <button
+                          onClick={() => handleDelete(history._id)}
+                          className="text-red-500 hover:text-red-600"
+                          title="Delete"
+                        >
+                          <i className="text-xl">
+                            <MdDelete />
+                          </i>
+                        </button>
+                      </>
+                    ) : (
+                      <span className="text-gray-500 italic">
+                        You have not Initiated this transaction
+                      </span>
+                    )}
                   </td>
                 </tr>
               ))
@@ -339,6 +468,57 @@ const CollaborativeBookRecords = () => {
           </tbody>
         </table>
       </div>
+      {isEditing && (
+        <form
+          onSubmit={handleEditSubmit}
+          className="p-4 border rounded-lg shadow-md bg-white mb-4"
+        >
+          <h3 className="text-lg font-bold text-gray-700 mb-4">
+            Edit Transaction
+          </h3>
+          <div className="grid gap-4 mb-4">
+            <input
+              type="text"
+              value={editData.amount}
+              onChange={(e) =>
+                setEditData({ ...editData, amount: e.target.value })
+              }
+              className="border rounded px-4 py-2"
+              placeholder="Amount"
+              required
+            />
+            <select
+              value={editData.transactionType}
+              onChange={(e) =>
+                setEditData({ ...editData, transactionType: e.target.value })
+              }
+              className="border rounded px-4 py-2"
+              required
+            >
+              <option value="" disabled>
+                Select Transaction Type
+              </option>
+              <option value="you will get">You Will Get</option>
+              <option value="you will give">You Will Give</option>
+            </select>
+          </div>
+          <div className="flex gap-4">
+            <button
+              type="submit"
+              className="px-4 py-2 bg-blue-500 text-white font-semibold rounded-lg hover:bg-blue-600"
+            >
+              Save Changes
+            </button>
+            <button
+              type="button"
+              onClick={closeEditForm}
+              className="px-4 py-2 bg-red-500 text-white font-semibold rounded-lg hover:bg-red-600"
+            >
+              Cancel
+            </button>
+          </div>
+        </form>
+      )}
     </div>
   );
 };

@@ -1,5 +1,5 @@
-import React, { useState, useEffect } from "react";
-
+import React, { useState, useEffect} from "react";
+import { useNavigate } from "react-router-dom";
 const AddTransactions = () => {
   // State variables for form data
   const [clientUserId, setClientUserId] = useState("");
@@ -7,7 +7,7 @@ const AddTransactions = () => {
   const [transactionType, setTransactionType] = useState("");
   const [amount, setAmount] = useState(""); // Amount will be treated as a number
   const [description, setDescription] = useState("");
- 
+ const navigate = useNavigate();
 
   const [clients, setClients] = useState([]); // To store client data
   const [books, setBooks] = useState([]); // To store book data
@@ -117,7 +117,9 @@ const AddTransactions = () => {
       alert("An error occurred");
     }
   };
-
+  const Goback = () => { 
+    navigate(-1);
+  }
   return (
     <div className="container mx-auto p-4">
       <h1 className="text-2xl font-semibold mb-4">Add Transaction</h1>
@@ -233,12 +235,19 @@ const AddTransactions = () => {
             required
           />
         </div>
- 
+
         <button
           type="submit"
           className="bg-blue-500 text-white px-4 py-2 rounded-md"
         >
           Create Transaction
+        </button>
+        <button
+          type="submit"
+          className="bg-blue-500 text-white px-4 py-2 rounded-md"
+          onClick={Goback}
+        >
+           Go Back 
         </button>
       </form>
     </div>

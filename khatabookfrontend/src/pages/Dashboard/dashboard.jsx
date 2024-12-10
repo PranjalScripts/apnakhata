@@ -1,6 +1,10 @@
 import React, { useEffect, useState } from "react";
 import { useNavigate } from "react-router-dom";
-import { AiOutlineArrowLeft, AiOutlineArrowRight } from "react-icons/ai"; // Import arrows
+import {
+  AiOutlineArrowLeft,
+  AiOutlineArrowRight,
+  AiOutlinePlus,
+} from "react-icons/ai"; // Import arrows and plus icon
 
 const Dashboard = () => {
   const [transactions, setTransactions] = useState([]);
@@ -68,7 +72,7 @@ const Dashboard = () => {
             unconfirmedYouWillGet,
             unconfirmedYouWillGive,
             source: "client",
-            transactionId: transaction._id,  
+            transactionId: transaction._id,
           };
         });
 
@@ -113,7 +117,7 @@ const Dashboard = () => {
               unconfirmedYouWillGet,
               unconfirmedYouWillGive,
               source: "transaction",
-              transactionId: transaction._id, // Get the transaction ID from transactions
+              transactionId: transaction._id,
             };
           }
         );
@@ -132,14 +136,17 @@ const Dashboard = () => {
     fetchAllTransactions();
   }, []);
 
- const viewTransactionDetails = (transactionId, source) => {
-   if (source === "client") {
-     navigate(`/transaction-details/${transactionId}`); // For client source
-   } else {
-     navigate(`/history/${transactionId}`); // For other sources
-   }
- };
+  const viewTransactionDetails = (transactionId, source) => {
+    if (source === "client") {
+      navigate(`/transaction-details/${transactionId}`);
+    } else {
+      navigate(`/history/${transactionId}`);
+    }
+  };
 
+  const addTransaction = () => {
+    navigate("/addtransaction");
+  };
 
   if (loading) {
     return (
@@ -149,21 +156,40 @@ const Dashboard = () => {
     );
   }
 
+  const transactionsFromSource = transactions.filter(
+    (transaction) => transaction.source === "transaction"
+  );
+
   return (
     <div className="p-4 max-w-6xl mx-auto">
       <h1 className="text-2xl font-bold text-gray-800 mb-6">Transactions</h1>
-      {(transactions?.length || 0) === 0 ? (
+      {transactionsFromSource.length === 0 ? (
         <div className="flex flex-col items-center justify-center min-h-screen">
           <div className="text-lg font-bold text-gray-700 mb-4">
             No transactions found.
           </div>
+          <button
+            onClick={addTransaction}
+            className="flex items-center space-x-2 px-4 py-2 bg-blue-500 text-white rounded-lg shadow hover:bg-blue-600 transition"
+          >
+            <AiOutlinePlus className="text-xl" />
+            <span>Add Transaction</span>
+          </button>
         </div>
       ) : (
         <div className="overflow-x-auto">
+          <button
+            onClick={addTransaction}
+            className="flex items-center space-x-2 px-4 py-2 bg-blue-500 text-white rounded-lg shadow hover:bg-blue-600 transition"
+          >
+            <AiOutlinePlus className="text-xl" />
+            <span>Add Transaction</span>
+          </button>
           <table className="min-w-full border-collapse border border-gray-300 bg-white shadow-md rounded-lg">
             <thead>
               <tr className="bg-gray-100 text-left text-gray-700">
                 <th className="border border-gray-300 px-4 py-2">Name</th>
+                <th className="border border-gray-300 px-4 py-2">Book Name</th>
                 <th className="border border-gray-300 px-4 py-2">
                   You Will Get
                 </th>
@@ -198,17 +224,19 @@ const Dashboard = () => {
                       />
                     )}
                   </td>
-
+                  <td className="border border-gray-300 px-4 py-2 capitalize">
+                    {transaction.bookId?.bookname || "Could Not Find Book Name"}
+                  </td>
                   <td className="border border-gray-300 px-4 py-2 capitalize">
                     {transaction.confirmedYouWillGet || 0}
                   </td>
-
                   <td className="border border-gray-300 px-4 py-2 capitalize">
                     {transaction.confirmedYouWillGive || 0}
                   </td>
-
                   <td className="border border-gray-300 px-4 py-2">
-                    {transaction.outstandingBalance || "N/A"}
+                    {transaction.outstandingBalance === 0
+                      ? 0
+                      : transaction.outstandingBalance || "N/A"}
                   </td>
                   <td className="border border-gray-300 px-4 py-2">
                     <button
@@ -218,6 +246,7 @@ const Dashboard = () => {
                           transaction.source
                         )
                       }
+                      className="text-blue-500 underline"
                     >
                       Click here
                     </button>

@@ -17,17 +17,8 @@ const transactionSchema = new mongoose.Schema(
       ref: "ClientUser",
       required: true,
     },
-    file: {
-      type: String,
-    },
-    initiatedBy: {
-      type: String,
+  
  
-    },
-    initiaterId: {
-      type: String,
-     // required: true,
-    },
     transactionHistory: [ 
       {
         transactionType: {
@@ -60,6 +51,10 @@ const transactionSchema = new mongoose.Schema(
         initiaterId: {
           type: String,
         },
+        file: {
+          type: String,
+         }
+      
       },
     ],
     outstandingBalance: {

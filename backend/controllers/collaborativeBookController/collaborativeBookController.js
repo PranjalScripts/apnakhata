@@ -2,6 +2,8 @@ const Transaction = require("../../models/transactionModel/transactionModel");
 const Client = require("../../models/clientUserModel/clientUserModel");
 const User = require("../../models/userModel/userModel");
 const notificationapi = require("notificationapi-node-server-sdk").default;
+const upload = require("../../middleware/uploadMiddleware"); // Multer middleware for file uploads
+
 require("dotenv").config();
 
  notificationapi.init(process.env.clientId, process.env.clientSecret);
@@ -73,139 +75,309 @@ const getTransactionstoclient = async (req, res) => {
   }
 };
 // Create a new transaction
-  const createTransaction = async (req, res) => {
-  try {
-    const { bookId, clientUserId, transactionType, amount, description } =
-      req.body;
+//   const createTransaction = async (req, res) => {
+//   try {
+//     const { bookId, clientUserId, transactionType, amount, description } =
+//       req.body;
 
-    const userId = req.user.id; // Get the user ID from the authenticated user
-    const initiatedBy = req.user.name; // Get the user name from the authenticated user
-    const initiaterId = req.user.id;
+//     const userId = req.user.id; // Get the user ID from the authenticated user
+//     const initiatedBy = req.user.name; // Get the user name from the authenticated user
+//     const initiaterId = req.user.id;
 
-    // Validate input
-    if (
-      !bookId ||
-      !userId ||
-      !clientUserId ||
-      !transactionType ||
-      !amount ||
-      !initiatedBy ||
-      !initiaterId
+//     // Validate input
+//     if (
+//       !bookId ||
+//       !userId ||
+//       !clientUserId ||
+//       !transactionType ||
+//       !amount ||
+//       !initiatedBy ||
+//       !initiaterId
       
-    ) {
-      return res.status(400).json({ message: "Missing required fields." });
-    }
+//     ) {
+//       return res.status(400).json({ message: "Missing required fields." });
+//     }
 
-    if (typeof amount !== "number" || amount <= 0) {
-      return res
-        .status(400)
-        .json({ message: "Amount must be a positive number." });
-    }
+//     if (typeof amount !== "number" || amount <= 0) {
+//       return res
+//         .status(400)
+//         .json({ message: "Amount must be a positive number." });
+//     }
 
-    if (!["you will get", "you will give"].includes(transactionType)) {
-      return res
-        .status(400)
-        .json({ message: "Invalid transaction type provided." });
-    }
+//     if (!["you will get", "you will give"].includes(transactionType)) {
+//       return res
+//         .status(400)
+//         .json({ message: "Invalid transaction type provided." });
+//     }
 
-    // Check if a transaction already exists for the same client, book, and user
-    let existingTransaction = await Transaction.findOne({
-      bookId,
-      userId,
-      clientUserId,
-    });
+//     // Check if a transaction already exists for the same client, book, and user
+//     let existingTransaction = await Transaction.findOne({
+//       bookId,
+//       userId,
+//       clientUserId,
+//     });
 
-    let transaction;
-    if (existingTransaction) {
-      // Update transaction history
-      existingTransaction.transactionHistory.push({
-        transactionType,
-        amount,
-        description,
-        initiatedBy,
-        initiaterId,
-        transactionDate: new Date(),
-        outstandingBalance: existingTransaction.outstandingBalance, // Keep outstanding balance unchanged until confirmation
-        confirmationStatus: "pending",
-      });
+//     let transaction;
+//     if (existingTransaction) {
+//       // Update transaction history
+//       existingTransaction.transactionHistory.push({
+//         transactionType,
+//         amount,
+//         description,
+//         initiatedBy,
+//         initiaterId,
+//         transactionDate: new Date(),
+//         outstandingBalance: existingTransaction.outstandingBalance, // Keep outstanding balance unchanged until confirmation
+//         confirmationStatus: "pending",
+//       });
 
-      // Save the updated transaction
-      transaction = await existingTransaction.save();
+//       // Save the updated transaction
+//       transaction = await existingTransaction.save();
 
-      res.status(200).json({
-        message: "Transaction updated successfully.",
-        transaction,
-      });
-    } else {
-      // Create a new transaction
-      const newTransaction = new Transaction({
-        bookId,
-        userId,
-        clientUserId,
-        transactionType,
-        initiatedBy,
-        initiaterId,
-        transactionHistory: [
-          {
-            transactionType,
-            amount,
-            description,
-            initiatedBy: req.user.name,
-            initiaterId: req.user.id,
-            transactionDate: new Date(),
-            outstandingBalance: 0, // Initially 0 until confirmation
-            confirmationStatus: "pending",
-          },
-        ],
-        outstandingBalance: 0, // Initialize to 0 until confirmation
-      });
+//       res.status(200).json({
+//         message: "Transaction updated successfully.",
+//         transaction,
+//       });
+//     } else {
+//       // Create a new transaction
+//       const newTransaction = new Transaction({
+//         bookId,
+//         userId,
+//         clientUserId,
+//         transactionType,
+//         initiatedBy,
+//         initiaterId,
+//         transactionHistory: [
+//           {
+//             transactionType,
+//             amount,
+//             description,
+//             initiatedBy: req.user.name,
+//             initiaterId: req.user.id,
+//             transactionDate: new Date(),
+//             outstandingBalance: 0, // Initially 0 until confirmation
+//             confirmationStatus: "pending",
+//           },
+//         ],
+//         outstandingBalance: 0, // Initialize to 0 until confirmation
+//       });
 
-      // Save the new transaction
-      transaction = await newTransaction.save();
+//       // Save the new transaction
+//       transaction = await newTransaction.save();
 
-      res.status(201).json({
-        message: "Transaction created successfully.",
-        transaction,
-      });
-    }
+//       res.status(201).json({
+//         message: "Transaction created successfully.",
+//         transaction,
+//       });
+//     }
 
-    // Fetch the client's email and phone number from the Client model
-    const client = await Client.findById(clientUserId); // Assuming clientUserId is the client's unique ID
+//     // Fetch the client's email and phone number from the Client model
+//     const client = await Client.findById(clientUserId); // Assuming clientUserId is the client's unique ID
 
-    if (!client) {
-      return res.status(404).json({
-        message: "Client not found",
-      });
-    }
+//     if (!client) {
+//       return res.status(404).json({
+//         message: "Client not found",
+//       });
+//     }
 
-    // Trigger notification
-    const notificationData = {
-      notificationId: "apnakhata_63_07",
-      user: {
-        id: clientUserId, // User ID or unique identifier
-        email: client.email, // Provide the client's email from the client model
-        number: client.mobile, // Provide the client's phone number from the client model
-      },
-      mergeTags: {
-        transactionType,
-        amount: amount.toFixed(2),
-        description,
-        initiatedBy,
-        date: new Date().toLocaleDateString(),
-      },
-    };
+//     // Trigger notification
+//     const notificationData = {
+//       notificationId: "apnakhata_63_07",
+//       user: {
+//         id: clientUserId, // User ID or unique identifier
+//         email: client.email, // Provide the client's email from the client model
+//         number: client.mobile, // Provide the client's phone number from the client model
+//       },
+//       mergeTags: {
+//         transactionType,
+//         amount: amount.toFixed(2),
+//         description,
+//         initiatedBy,
+//         date: new Date().toLocaleDateString(),
+//       },
+//     };
 
-    try {
-      await notificationapi.send(notificationData);
-      console.log("Notification sent successfully!");
-    } catch (notifyError) {
-      console.error("Error sending notification:", notifyError);
-    }
-  } catch (error) {
-    console.error(error); // Log the error for debugging
-    res.status(500).json({ error: error.message });
-  }
-};
+//     try {
+//       await notificationapi.send(notificationData);
+//       console.log("Notification sent successfully!");
+//     } catch (notifyError) {
+//       console.error("Error sending notification:", notifyError);
+//     }
+//   } catch (error) {
+//     console.error(error); // Log the error for debugging
+//     res.status(500).json({ error: error.message });
+//   }
+// };
+ 
+
+ const createTransaction = async (req, res) => {
+   try {
+     const { bookId, clientUserId, transactionType, amount, description } =
+       req.body;
+
+     const userId = req.user.id; // Get the user ID from the authenticated user
+     const initiatedBy = req.user.name; // Get the user name from the authenticated user
+     const initiaterId = req.user.id;
+
+     // Validate input
+     if (!bookId) {
+       return res.status(400).json({ message: "Book ID is not provided." });
+     }
+     if (!userId) {
+       return res.status(400).json({ message: "User ID is not provided." });
+     }
+     if (!clientUserId) {
+       return res
+         .status(400)
+         .json({ message: "Client User ID is not provided." });
+     }
+     if (!transactionType) {
+       return res
+         .status(400)
+         .json({ message: "Transaction type is not provided." });
+     }
+     if (!amount) {
+       return res.status(400).json({ message: "Amount is not provided." });
+     }
+     if (!initiatedBy) {
+       return res
+         .status(400)
+         .json({ message: "Initiated By is not provided." });
+     }
+     if (!initiaterId) {
+       return res
+         .status(400)
+         .json({ message: "Initiater ID is not provided." });
+     }
+
+     // Parse amount to a number if it's a string
+     let parsedAmount =
+       typeof amount === "string" ? parseFloat(amount) : amount;
+
+     // Validate the amount
+     if (isNaN(parsedAmount) || parsedAmount <= 0) {
+       return res.status(400).json({
+         message: "Amount must be a positive number.",
+       });
+     }
+
+     // Update the `amount` variable to use the parsed value
+     req.body.amount = parsedAmount;
+
+     if (!["you will get", "you will give"].includes(transactionType)) {
+       return res
+         .status(400)
+         .json({ message: "Invalid transaction type provided." });
+     }
+
+     // Handle file uploads
+     let mediaFile = null;
+     if (req.file) {
+       mediaFile = req.file.path; // Save the path of the uploaded file
+     }
+
+     // Check if a transaction already exists for the same client, book, and user
+     let existingTransaction = await Transaction.findOne({
+       bookId,
+       userId,
+       clientUserId,
+     });
+
+     let transaction;
+     if (existingTransaction) {
+       // Update transaction history
+       existingTransaction.transactionHistory.push({
+         transactionType,
+         amount,
+         description,
+         initiatedBy,
+         initiaterId,
+         transactionDate: new Date(),
+         outstandingBalance: existingTransaction.outstandingBalance, // Keep outstanding balance unchanged until confirmation
+         confirmationStatus: "pending",
+         file: mediaFile, // Add media file to history if uploaded
+       });
+
+       // Save the updated transaction
+       transaction = await existingTransaction.save();
+
+       res.status(200).json({
+         message: "Transaction updated successfully.",
+         transaction,
+       });
+     } else {
+       // Create a new transaction
+       const newTransaction = new Transaction({
+         bookId,
+         userId,
+         clientUserId,
+         transactionType,
+         initiatedBy,
+         initiaterId,
+         transactionHistory: [
+           {
+             transactionType,
+             amount,
+             description,
+             initiatedBy: req.user.name,
+             initiaterId: req.user.id,
+             transactionDate: new Date(),
+             outstandingBalance: 0, // Initially 0 until confirmation
+             confirmationStatus: "pending",
+             file: mediaFile, // Add media file to the first transaction
+           },
+         ],
+         outstandingBalance: 0, // Initialize to 0 until confirmation
+       });
+
+       // Save the new transaction
+       transaction = await newTransaction.save();
+
+       res.status(201).json({
+         message: "Transaction created successfully.",
+         transaction,
+       });
+     }
+
+     // Fetch the client's email and phone number from the Client model
+     const client = await Client.findById(clientUserId); // Assuming clientUserId is the client's unique ID
+
+     if (!client) {
+       return res.status(404).json({
+         message: "Client not found",
+       });
+     }
+
+     // Trigger notification
+     const notificationData = {
+       notificationId: "apnakhata_63_07",
+       user: {
+         id: clientUserId, // User ID or unique identifier
+         email: client.email, // Provide the client's email from the client model
+         number: client.mobile, // Provide the client's phone number from the client model
+       },
+       mergeTags: {
+         transactionType,
+         amount: amount,
+         description,
+         initiatedBy,
+         date: new Date().toLocaleDateString(),
+       },
+     };
+
+     try {
+       await notificationapi.send(notificationData);
+       console.log("Notification sent successfully!");
+     } catch (notifyError) {
+       console.error("Error sending notification:", notifyError);
+     }
+   } catch (error) {
+     console.error(error); // Log the error for debugging
+     res.status(500).json({ error: error.message });
+   }
+ };
+
+ 
 
 //  Confirm a pending transaction
 const confirmTransaction = async (req, res) => {

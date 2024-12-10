@@ -1,6 +1,7 @@
 import React, { useEffect, useState } from "react";
 import { useParams } from "react-router-dom";
 import { MdEdit, MdDelete } from "react-icons/md";
+import { IoDownload } from 'react-icons/io5';   
 
 const History = () => {
   const { transactionId } = useParams(); // Get transaction ID from the route
@@ -9,6 +10,15 @@ const History = () => {
   const [updating, setUpdating] = useState(false);
   const [adding, setAdding] = useState(false);
   const [showForm, setShowForm] = useState(false); // Toggle form visibility
+  const [isEditing, setIsEditing] = useState(false);
+  const [isModalOpen, setIsModalOpen] = useState(false);
+  const [modalImage, setModalImage] = useState(null);
+
+  const [editData, setEditData] = useState({
+    id: null,
+    amount: "",
+    transactionType: "",
+  });
   const [selectedTransactionType, setSelectedTransactionType] = useState(""); // To store the transaction type
   const [newTransaction, setNewTransaction] = useState({
     amount: "",
@@ -89,12 +99,12 @@ const History = () => {
     }
 
     const transactionData = {
-      clientUserId: transaction.clientUserId, // Use the clientUserId from the fetched transaction
-      bookId: transaction.bookId, // Use the bookId from the fetched transaction
+      clientUserId: transaction.clientUserId,
+      bookId: transaction.bookId,
       transactionType: selectedTransactionType,
       amount: parsedAmount,
       description: newTransaction.description,
-      transactionId, // Pass the parent transaction ID
+      transactionId,
     };
 
     try {
@@ -121,7 +131,7 @@ const History = () => {
         }));
         alert("Transaction added successfully!");
         setNewTransaction({ amount: "", description: "" });
-        setShowForm(false); // Hide form after submission
+        setShowForm(false);
       } else {
         console.error("Failed to add transaction");
         alert("Failed to add transaction. Please try again.");
@@ -150,7 +160,7 @@ const History = () => {
       </div>
     );
   }
-  const handleEdit = (entry) => {};
+
   const handleDelete = async (entryId) => {
     const token = localStorage.getItem("token");
     if (window.confirm("Are you sure you want to delete this transaction?")) {
@@ -180,7 +190,69 @@ const History = () => {
       }
     }
   };
+  const openEditForm = (entry) => {
+    setEditData({
+      id: entry._id,
+      amount: entry.amount,
+      transactionType: entry.transactionType,
+    });
+    setIsEditing(true);
+  };
+  const closeEditForm = () => {
+    setIsEditing(false);
+    setEditData({ id: null, amount: "", transactionType: "" });
+  };
+  const handleEditSubmit = async (e) => {
+    e.preventDefault();
+    const { id, amount, transactionType } = editData;
 
+    const token = localStorage.getItem("token");
+    const updatedData = {
+      amount: parseFloat(amount),
+      transactionType: transactionType.toLowerCase(),
+    };
+
+    try {
+      const response = await fetch(
+        `http://localhost:5100/api/collab-transactions/transactions/${transactionId}/entries/${id}`,
+        {
+          method: "PATCH",
+          headers: {
+            "Content-Type": "application/json",
+            Authorization: `Bearer ${token}`,
+          },
+          body: JSON.stringify(updatedData),
+        }
+      );
+
+      if (response.ok) {
+        const updatedEntry = await response.json();
+        setTransaction((prev) => ({
+          ...prev,
+          transactionHistory: prev.transactionHistory.map((history) =>
+            history._id === id ? { ...history, ...updatedEntry.data } : history
+          ),
+        }));
+        alert("Transaction updated successfully!");
+        closeEditForm();
+      } else {
+        alert("Failed to update the transaction. Please try again.");
+      }
+    } catch (error) {
+      console.error("Error updating transaction:", error);
+      alert("An error occurred while updating the transaction.");
+    }
+  };
+
+  const handleImageClick = (imagePath) => {
+    setModalImage(`http://localhost:5100/${imagePath.replace(/\\/g, "/")}`);
+    setIsModalOpen(true);
+  };
+
+  const closeModal = () => {
+    setIsModalOpen(false);
+    setModalImage(null);
+  };
   return (
     <div className="p-4 max-w-6xl mx-auto">
       <h1 className="text-2xl font-bold text-gray-800 mb-6">
@@ -206,7 +278,6 @@ const History = () => {
           <strong>Outstanding Balance:</strong> {transaction.outstandingBalance}
         </p>
       </div>
-
       <h2 className="text-xl font-semibold text-gray-700 mb-4">
         Add New Transaction
       </h2>
@@ -230,7 +301,6 @@ const History = () => {
           You Will Give
         </button>
       </div>
-
       {showForm && (
         <form
           onSubmit={(e) => {
@@ -283,7 +353,6 @@ const History = () => {
           </button>
         </form>
       )}
-
       <h2 className="text-xl font-semibold text-gray-700 mb-4">
         Transaction History
       </h2>
@@ -299,6 +368,7 @@ const History = () => {
               <th className="border border-gray-300 px-4 py-2">Description</th>
               <th className="border border-gray-300 px-4 py-2">Date</th>
               <th className="border border-gray-300 px-4 py-2">Status</th>
+              <th className="border border-gray-300 px-4 py-2">files</th>
               <th className="border border-gray-300 px-4 py-2">Action</th>
             </tr>
           </thead>
@@ -327,7 +397,7 @@ const History = () => {
                     </span>
                   ) : userId === history.initiaterId ? (
                     <span className="text-blue-600 font-semibold">
-                      You Initiated
+                      Pending!
                     </span>
                   ) : (
                     <button
@@ -340,11 +410,23 @@ const History = () => {
                   )}
                 </td>
                 <td className="border border-gray-300 px-4 py-2">
+                  <img
+                    src={`http://localhost:5100/${history.file.replace(
+                      /\\/g,
+                      "/"
+                    )}`}
+                    alt="Transaction File"
+                    className="max-w-xs max-h-32 object-contain cursor-pointer"
+                    onClick={() => handleImageClick(history.file)}
+                  />
+                </td>
+
+                <td className="border border-gray-300 px-4 py-2">
                   {userId === history.initiaterId ? (
                     <>
                       {/* Edit button */}
                       <button
-                        onClick={() => handleEdit(history)}
+                        onClick={() => openEditForm(history)}
                         className="text-yellow-500 hover:text-yellow-600"
                         title="Edit"
                       >
@@ -375,6 +457,100 @@ const History = () => {
           </tbody>
         </table>
       </div>
+      {isEditing && (
+        <form
+          onSubmit={handleEditSubmit}
+          className="p-4 border rounded-lg shadow-md bg-white mb-4"
+        >
+          <h3 className="text-lg font-bold text-gray-700 mb-4">
+            Edit Transaction
+          </h3>
+          <div className="grid gap-4 mb-4">
+            <input
+              type="text"
+              value={editData.amount}
+              onChange={(e) =>
+                setEditData({ ...editData, amount: e.target.value })
+              }
+              className="border rounded px-4 py-2"
+              placeholder="Amount"
+              required
+            />
+            <select
+              value={editData.transactionType}
+              onChange={(e) =>
+                setEditData({ ...editData, transactionType: e.target.value })
+              }
+              className="border rounded px-4 py-2"
+              required
+            >
+              <option value="" disabled>
+                Select Transaction Type
+              </option>
+              <option value="you will get">You Will Get</option>
+              <option value="you will give">You Will Give</option>
+            </select>
+          </div>
+          <div className="flex gap-4">
+            <button
+              type="submit"
+              className="px-4 py-2 bg-blue-500 text-white font-semibold rounded-lg hover:bg-blue-600"
+            >
+              Save Changes
+            </button>
+            <button
+              type="button"
+              onClick={closeEditForm}
+              className="px-4 py-2 bg-red-500 text-white font-semibold rounded-lg hover:bg-red-600"
+            >
+              Cancel
+            </button>
+          </div>
+        </form>
+      )}
+
+      {isModalOpen && (
+        <div
+          className="fixed inset-0 bg-black bg-opacity-75 flex justify-center items-center z-50"
+          onClick={closeModal}
+        >
+          <div className="bg-white p-4 rounded-lg w-3/4 max-h-[80vh] relative"> 
+            {/* ye hai frame */}
+            <div
+              className="relative w-full h-full"
+              onClick={(e) => e.stopPropagation()} // Prevent modal close on clicking the image container
+            >
+              <img
+                src={modalImage}
+                alt="Transaction File"
+                className="w-full h-[80vh] flex select-none"
+                style={{
+                  height: "70vh",
+                  width: "auto",
+                  display: "flex",
+                  WebkitUserSelect: "none",
+                  margin: "auto", // For Safari
+                }}
+              />
+              <button
+                className="absolute top-4 right-4 bg-white rounded-full p-3 h-10 w-10 flex items-center justify-center text-xl font-bold"
+                onClick={closeModal}
+              >
+                ✖
+              </button>
+
+              {/* Download Icon with increased size using inline style */}
+              <a
+                href={modalImage}
+                download
+                className="absolute bottom-0 -left-1 bg-white/10 backdrop-blur-lg	border rounded-full px-6 py-1 flex items-center justify-center text-3xl font-bold"
+              >
+                <IoDownload />
+              </a>
+            </div>
+          </div>
+        </div>
+      )}
     </div>
   );
 };

@@ -9,6 +9,10 @@ const bookRoutes = require("./routes/bookRoute/bookRoutes");
 const clientUserRoutes = require("./routes/clientUserRoutes/clientUserRoutes");
 const collabtransactionRoutes = require("./routes/transactionRoutes/collabtransaction");
 const selftransactionRoutes = require("./routes/transactionRoutes/selfrecord");
+const path = require("path");
+
+// Serve static files from the "uploads" folder
+
   // config dot env file
 dotenv.config();
  
@@ -24,7 +28,8 @@ app.use(express.json());
 app.use(cors());
 //api for authentications
 app.use("/api/v1/auth", userRoutes);
- 
+app.use("/uploads", express.static(path.join(__dirname, "uploads")));
+
 //api for books
 app.use("/api/v2/transactionBooks", bookRoutes);
 //api for clients 
