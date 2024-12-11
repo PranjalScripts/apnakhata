@@ -1,17 +1,23 @@
 import React, { useEffect, useState } from "react";
 import { useParams } from "react-router-dom";
 import { MdEdit, MdDelete } from "react-icons/md";
+import { IoDownload } from "react-icons/io5";
+import { saveAs } from "file-saver";
+
 const CollaborativeBookRecords = () => {
-  const { transactionId } = useParams(); // Get transactionId from URL
+  const { transactionId } = useParams(); 
   const [transaction, setTransaction] = useState(null);
   const [updatingEntryId, setUpdatingEntryId] = useState(null);
+ const [isModalOpen, setIsModalOpen] = useState(false);
+ const [modalImage, setModalImage] = useState(null);
+
  
-  const [adding, setAdding] = useState(false);
   const [showForm, setShowForm] = useState(false);
   const [formData, setFormData] = useState({
     transactionType: "",
     amount: 0,
     description: "",
+    file:"",
   });
   const [isSubmitting, setIsSubmitting] = useState(false);
   const userId = localStorage.getItem("userId");
@@ -72,16 +78,24 @@ const CollaborativeBookRecords = () => {
     setIsSubmitting(true);
     const token = localStorage.getItem("token");
 
+    // Create a new FormData object
+    const formDataToSend = new FormData();
+    formDataToSend.append("transactionType", formData.transactionType);
+    formDataToSend.append("amount", formData.amount);
+    formDataToSend.append("description", formData.description);
+    if (formData.file) {
+      formDataToSend.append("file", formData.file); // Append the file if it exists
+    }
+
     try {
       const response = await fetch(
         `http://localhost:5100/api/collab-transactions/transactions/${transactionId}/add`,
         {
           method: "POST",
           headers: {
-            "Content-Type": "application/json",
             Authorization: `Bearer ${token}`,
           },
-          body: JSON.stringify(formData),
+          body: formDataToSend, // Send FormData instead of JSON
         }
       );
 
@@ -90,10 +104,15 @@ const CollaborativeBookRecords = () => {
       if (response.ok) {
         setTransaction((prev) => ({
           ...prev,
-          transactionHistory: [...prev.transactionHistory, data.entry],
+          transactionHistory: [...prev.transactionHistory, data.transaction], // Adjust based on the response
         }));
         setShowForm(false);
-        setFormData({ transactionType: "", amount: 0, description: "" });
+        setFormData({
+          transactionType: "",
+          amount: 0,
+          description: "",
+          file: "",
+        });
         alert("Transaction added successfully!");
       } else {
         console.error("Failed to add transaction.");
@@ -106,6 +125,7 @@ const CollaborativeBookRecords = () => {
       setIsSubmitting(false);
     }
   };
+
 
   const updateTransactionStatus = async (entryId) => {
     setUpdatingEntryId(entryId);
@@ -146,6 +166,35 @@ const CollaborativeBookRecords = () => {
       <div className="text-center py-10">Loading transaction details...</div>
     );
   }
+const closeModal = () => {
+  setIsModalOpen(false);
+  setModalImage(null);
+};
+  const handleImageClick = (imagePath) => {
+    setModalImage(`http://localhost:5100/${imagePath.replace(/\\/g, "/")}`);
+    setIsModalOpen(true);
+  };
+const handleDownload = async () => {
+  try {
+    // Extract the file name from the URL
+    const urlParts = modalImage.split("/");
+    const fileName = urlParts[urlParts.length - 1]; // Get the last part of the URL as the file name
+
+    // Fetch the file
+    const response = await fetch(modalImage);
+    if (!response.ok) {
+      throw new Error("Failed to fetch the file");
+    }
+
+    // Convert the response to a Blob
+    const blob = await response.blob();
+
+    // Save the file with its original name and format
+    saveAs(blob, fileName);
+  } catch (error) {
+    console.error("Download failed:", error);
+  }
+};
   const handleDelete = async (entryId) => {
     const token = localStorage.getItem("token");
     if (window.confirm("Are you sure you want to delete this transaction?")) {
@@ -189,47 +238,50 @@ const CollaborativeBookRecords = () => {
     setEditData({ id: null, amount: "", transactionType: "" });
   };
 
-  const handleEditSubmit = async (e) => {
-    e.preventDefault();
-    const { id, amount, transactionType } = editData;
+ const handleEditSubmit = async (e) => {
+   e.preventDefault();
+   const { id, amount, transactionType, description, file } = editData;
 
-    const token = localStorage.getItem("token");
-    const updatedData = {
-      amount: parseFloat(amount),
-      transactionType: transactionType.toLowerCase(),
-    };
+   const token = localStorage.getItem("token");
 
-    try {
-      const response = await fetch(
-        `http://localhost:5100/api/collab-transactions/transactions/${transactionId}/entries/${id}`,
-        {
-          method: "PATCH",
-          headers: {
-            "Content-Type": "application/json",
-            Authorization: `Bearer ${token}`,
-          },
-          body: JSON.stringify(updatedData),
-        }
-      );
+   // Prepare form data for file upload and other fields
+   const formData = new FormData();
+   formData.append("amount", parseFloat(amount));
+   formData.append("transactionType", transactionType.toLowerCase());
+   if (description) formData.append("description", description);
+   if (file) formData.append("file", file);
 
-      if (response.ok) {
-        const updatedEntry = await response.json();
-        setTransaction((prev) => ({
-          ...prev,
-          transactionHistory: prev.transactionHistory.map((history) =>
-            history._id === id ? { ...history, ...updatedEntry.data } : history
-          ),
-        }));
-        alert("Transaction updated successfully!");
-        closeEditForm();
-      } else {
-        alert("Failed to update the transaction. Please try again.");
-      }
-    } catch (error) {
-      console.error("Error updating transaction:", error);
-      alert("An error occurred while updating the transaction.");
-    }
-  };
+   try {
+     const response = await fetch(
+       `http://localhost:5100/api/collab-transactions/transactions/${transactionId}/entries/${id}`,
+       {
+         method: "PATCH",
+         headers: {
+           Authorization: `Bearer ${token}`,
+         },
+         body: formData,
+       }
+     );
+
+     if (response.ok) {
+       const updatedEntry = await response.json();
+       setTransaction((prev) => ({
+         ...prev,
+         transactionHistory: prev.transactionHistory.map((history) =>
+           history._id === id ? { ...history, ...updatedEntry.data } : history
+         ),
+       }));
+       alert("Transaction updated successfully!");
+       closeEditForm();
+     } else {
+       alert("Failed to update the transaction. Please try again.");
+     }
+   } catch (error) {
+     console.error("Error updating transaction:", error);
+     alert("An error occurred while updating the transaction.");
+   }
+ };
+
   return (
     <div className="container mx-auto p-6 max-w-3xl">
       <h1 className="text-3xl font-semibold text-gray-800 mb-6">
@@ -342,6 +394,12 @@ const CollaborativeBookRecords = () => {
               value={formData.description}
               onChange={handleInputChange}
             ></textarea>
+            <input
+              type="file"
+              onChange={(e) =>
+                setFormData({ ...formData, file: e.target.files[0] })
+              }
+            />
           </div>
           <div className="flex space-x-4">
             <button
@@ -361,26 +419,28 @@ const CollaborativeBookRecords = () => {
         </form>
       )}
 
-      <h2 className="text-2xl font-semibold text-gray-800 mb-4">
+      <h2 className="text-2xl bg-white shadow-lg rounded-lg p-6font-semibold text-gray-800 mb-4">
         Transaction History
       </h2>
-      <div className="bg-white shadow-lg rounded-lg p-6">
-        <table className="min-w-full table-auto">
+      <div className="">
+        <table className="min-w-full bg-white shadow-lg rounded-lg p-6table-auto">
           <thead>
             <tr className="border-b border-gray-200">
-              <th className="px-4 py-2 text-left text-gray-700">
+              <th className="px-2 py-1 text-left text-gray-700">
                 Initiated By
               </th>
-              <th className="px-4 py-2 text-left text-gray-700">
+              <th className="px-2 py-1 text-left text-gray-700">
                 Transaction Type
               </th>
-              <th className="px-4 py-2 text-left text-gray-700">Amount</th>
-              <th className="px-4 py-2 text-left text-gray-700">Description</th>
-              <th className="px-4 py-2 text-left text-gray-700">
+              <th className="px-2 py-1 text-left text-gray-700">Amount</th>
+              <th className="px-2 py-1 text-left text-gray-700">Description</th>
+              <th className="px-2 py-1 text-left text-gray-700">
                 Transaction Date
               </th>
-              <th className="px-4 py-2 text-left text-gray-700">Status</th>
-              <th className="px-4 py-2 text-left text-gray-700">Action</th>
+              <th className="px-2 py-1 text-left text-gray-700">files</th>
+              <th className="px-2 py-1 text-left text-gray-700">Status</th>
+
+              <th className="px-2 py-1 text-left text-gray-700">Action</th>
             </tr>
           </thead>
           <tbody>
@@ -402,6 +462,23 @@ const CollaborativeBookRecords = () => {
                   <td className="border border-gray-300 px-4 py-2">
                     {new Date(history.transactionDate).toLocaleString()}
                   </td>
+                  <td className="border border-gray-300 px-4 py-2">
+                    {typeof history.file === "string" &&
+                    history.file.trim() !== "" ? (
+                      <img
+                        src={`http://localhost:5100/${history.file.replace(
+                          /\\/g,
+                          "/"
+                        )}`}
+                        alt="Transaction File"
+                        className="max-w-xs max-h-32 object-contain cursor-pointer"
+                        onClick={() => handleImageClick(history.file)}
+                      />
+                    ) : (
+                      <span>No file provided</span> // Display this message when no file exists
+                    )}
+                  </td>
+
                   <td className="border border-gray-300 px-4 py-2">
                     {history.confirmationStatus === "confirmed" ? (
                       <span className="text-green-600 font-semibold">
@@ -478,7 +555,7 @@ const CollaborativeBookRecords = () => {
           </h3>
           <div className="grid gap-4 mb-4">
             <input
-              type="text"
+              type="number"
               value={editData.amount}
               onChange={(e) =>
                 setEditData({ ...editData, amount: e.target.value })
@@ -486,6 +563,21 @@ const CollaborativeBookRecords = () => {
               className="border rounded px-4 py-2"
               placeholder="Amount"
               required
+            />
+            <input
+              type="file"
+              onChange={(e) =>
+                setEditData({ ...editData, file: e.target.files[0] })
+              }
+              className="border rounded px-4 py-2"
+            />
+            <textarea
+              value={editData.description}
+              onChange={(e) =>
+                setEditData({ ...editData, description: e.target.value })
+              }
+              className="border rounded px-4 py-2"
+              placeholder="Description"
             />
             <select
               value={editData.transactionType}
@@ -518,6 +610,48 @@ const CollaborativeBookRecords = () => {
             </button>
           </div>
         </form>
+      )}
+
+      {isModalOpen && (
+        <div
+          className="fixed inset-0 bg-black bg-opacity-75 flex justify-center items-center z-50"
+          onClick={closeModal}
+        >
+          <div className="bg-white p-4 rounded-lg w-3/4 max-h-[80vh] relative">
+            {/* ye hai frame */}
+            <div
+              className="relative w-full h-full"
+              onClick={(e) => e.stopPropagation()} // Prevent modal close on clicking the image container
+            >
+              <img
+                src={modalImage}
+                alt="Transaction File"
+                className="w-full h-[80vh] flex select-none"
+                style={{
+                  height: "70vh",
+                  width: "auto",
+                  display: "flex",
+                  WebkitUserSelect: "none",
+                  margin: "auto", // For Safari
+                }}
+              />
+              <button
+                className="absolute top-4 right-4 bg-white rounded-full p-3 h-10 w-10 flex items-center justify-center text-xl font-bold"
+                onClick={closeModal}
+              >
+                ✖
+              </button>
+
+              {/* Download Icon with increased size using inline style */}
+              <button
+                onClick={handleDownload}
+                className="absolute bottom-0 -left-1 bg-white/10 backdrop-blur-lg	border rounded-full px-6 py-1 flex items-center justify-center text-3xl font-bold"
+              >
+                <IoDownload />
+              </button>
+            </div>
+          </div>
+        </div>
       )}
     </div>
   );

@@ -28,6 +28,7 @@ router.patch(
 router.patch(
   "/transactions/:transactionId/entries/:entryId",
   authenticate, // Middleware to ensure the user is authenticated
+  upload.single('file'), // Middleware to handle file uploads
   updateTransaction // Controller to handle the update logic
 );
 
@@ -36,7 +37,7 @@ router.delete(
   authenticate ,  
   deleteTransactionEntry 
 );
-router.post("/transactions/:transactionId/add",authenticate, addExistingTransaction);
+router.post("/transactions/:transactionId/add",authenticate,upload.single('file'), addExistingTransaction);
 
 module.exports = router;
  

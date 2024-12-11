@@ -2,7 +2,7 @@ import React, { useEffect, useState } from "react";
 import { useParams } from "react-router-dom";
 import { MdEdit, MdDelete } from "react-icons/md";
 import { IoDownload } from 'react-icons/io5';   
-
+import { saveAs } from "file-saver";
 const History = () => {
   const { transactionId } = useParams(); // Get transaction ID from the route
   const [transaction, setTransaction] = useState(null);
@@ -25,7 +25,7 @@ const History = () => {
     description: "",
   });
   const userId = localStorage.getItem("userId");
-
+//fetch transaction
   useEffect(() => {
     const fetchTransaction = async () => {
       const token = localStorage.getItem("token");
@@ -51,7 +51,7 @@ const History = () => {
 
     fetchTransaction();
   }, [transactionId]);
-
+//update transaction 
   const updateTransactionStatus = async (entryId) => {
     setUpdating(true);
     const token = localStorage.getItem("token");
@@ -84,7 +84,7 @@ const History = () => {
       setUpdating(false);
     }
   };
-
+//add transaction into transaction history
   const handleAddTransaction = async () => {
     if (!transaction) return;
 
@@ -151,16 +151,30 @@ const History = () => {
     );
   }
 
-  if (!transaction) {
-    return (
-      <div className="flex items-center justify-center min-h-screen">
-        <div className="text-lg font-bold text-gray-700">
-          Transaction not found
-        </div>
-      </div>
-    );
-  }
+ 
+  //download file
+const handleDownload = async () => {
+  try {
+    // Extract the file name from the URL
+    const urlParts = modalImage.split("/");
+    const fileName = urlParts[urlParts.length - 1]; // Get the last part of the URL as the file name
 
+    // Fetch the file
+    const response = await fetch(modalImage);
+    if (!response.ok) {
+      throw new Error("Failed to fetch the file");
+    }
+
+    // Convert the response to a Blob
+    const blob = await response.blob();
+
+    // Save the file with its original name and format
+    saveAs(blob, fileName);
+  } catch (error) {
+    console.error("Download failed:", error);
+  }
+};
+  //delete transaction
   const handleDelete = async (entryId) => {
     const token = localStorage.getItem("token");
     if (window.confirm("Are you sure you want to delete this transaction?")) {
@@ -190,6 +204,7 @@ const History = () => {
       }
     }
   };
+  //edit transaction
   const openEditForm = (entry) => {
     setEditData({
       id: entry._id,
@@ -198,10 +213,11 @@ const History = () => {
     });
     setIsEditing(true);
   };
+  //close edit form
   const closeEditForm = () => {
     setIsEditing(false);
     setEditData({ id: null, amount: "", transactionType: "" });
-  };
+  };//edit transaction submit
   const handleEditSubmit = async (e) => {
     e.preventDefault();
     const { id, amount, transactionType } = editData;
@@ -243,16 +259,17 @@ const History = () => {
       alert("An error occurred while updating the transaction.");
     }
   };
-
+//handle image click
   const handleImageClick = (imagePath) => {
     setModalImage(`http://localhost:5100/${imagePath.replace(/\\/g, "/")}`);
     setIsModalOpen(true);
   };
-
+//close modal
   const closeModal = () => {
     setIsModalOpen(false);
     setModalImage(null);
   };
+  //return jsx
   return (
     <div className="p-4 max-w-6xl mx-auto">
       <h1 className="text-2xl font-bold text-gray-800 mb-6">
@@ -266,7 +283,7 @@ const History = () => {
           <strong>Book Name:</strong> {transaction.bookId.bookname}
         </p>
         <p>
-          <strong>User Name:</strong> {transaction.userId.name}
+          <strong>User Name:</strong> {transaction.userId}
         </p>
         <p>
           <strong>Client Name:</strong> {transaction.clientUserId.name}
@@ -373,87 +390,96 @@ const History = () => {
             </tr>
           </thead>
           <tbody>
-            {transaction.transactionHistory.map((history) => (
-              <tr key={history._id} className="hover:bg-gray-50">
-                <td className="border border-gray-300 px-4 py-2">
-                  {history.initiatedBy}
-                </td>
-                <td className="border border-gray-300 px-4 py-2">
-                  {history.transactionType}
-                </td>
-                <td className="border border-gray-300 px-4 py-2">
-                  {history.amount}
-                </td>
-                <td className="border border-gray-300 px-4 py-2">
-                  {history.description}
-                </td>
-                <td className="border border-gray-300 px-4 py-2">
-                  {new Date(history.transactionDate).toLocaleString()}
-                </td>
-                <td className="border border-gray-300 px-4 py-2">
-                  {history.confirmationStatus === "confirmed" ? (
-                    <span className="text-green-600 font-semibold">
-                      Confirmed
-                    </span>
-                  ) : userId === history.initiaterId ? (
-                    <span className="text-blue-600 font-semibold">
-                      Pending!
-                    </span>
-                  ) : (
-                    <button
-                      onClick={() => updateTransactionStatus(history._id)}
-                      disabled={updating}
-                      className="px-4 py-2 bg-blue-500 text-white font-semibold rounded-lg hover:bg-blue-600 disabled:opacity-50"
-                    >
-                      {updating ? "Updating..." : "Confirm"}
-                    </button>
-                  )}
-                </td>
-                <td className="border border-gray-300 px-4 py-2">
-                  <img
-                    src={`http://localhost:5100/${history.file.replace(
-                      /\\/g,
-                      "/"
-                    )}`}
-                    alt="Transaction File"
-                    className="max-w-xs max-h-32 object-contain cursor-pointer"
-                    onClick={() => handleImageClick(history.file)}
-                  />
-                </td>
-
-                <td className="border border-gray-300 px-4 py-2">
-                  {userId === history.initiaterId ? (
-                    <>
-                      {/* Edit button */}
+            {transaction.transactionHistory?.length > 0 ? (
+              transaction.transactionHistory.map((history) => (
+                <tr key={history._id} className="hover:bg-gray-50">
+                  <td className="border border-gray-300 px-4 py-2">
+                    {history.initiatedBy}
+                  </td>
+                  <td className="border border-gray-300 px-4 py-2">
+                    {userId === history.initiaterId
+                      ? history.transactionType // Show the actual transaction type if user is the initiator
+                      : history.transactionType === "you will give"
+                      ? "You will get"
+                      : "You will give"}
+                  </td>
+                  <td className="border border-gray-300 px-4 py-2">
+                    {history.amount}
+                  </td>
+                  <td className="border border-gray-300 px-4 py-2">
+                    {history.description}
+                  </td>
+                  <td className="border border-gray-300 px-4 py-2">
+                    {new Date(history.transactionDate).toLocaleString()}
+                  </td>
+                  <td className="border border-gray-300 px-4 py-2">
+                    {history.confirmationStatus === "confirmed" ? (
+                      <span className="text-green-600 font-semibold">
+                        Confirmed
+                      </span>
+                    ) : userId === history.initiaterId ? (
+                      <span className="text-blue-600 font-semibold">
+                        Pending!
+                      </span>
+                    ) : (
                       <button
-                        onClick={() => openEditForm(history)}
-                        className="text-yellow-500 hover:text-yellow-600"
-                        title="Edit"
+                        onClick={() => updateTransactionStatus(history._id)}
+                        disabled={updating}
+                        className="px-4 py-2 bg-blue-500 text-white font-semibold rounded-lg hover:bg-blue-600 disabled:opacity-50"
                       >
-                        <i className="text-xl">
-                          <MdEdit />
-                        </i>
+                        {updating ? "Updating..." : "Confirm"}
                       </button>
-
-                      {/* Delete button */}
-                      <button
-                        onClick={() => handleDelete(history._id)}
-                        className="text-red-500 hover:text-red-600"
-                        title="Delete"
-                      >
-                        <i className="text-xl">
-                          <MdDelete />
-                        </i>
-                      </button>
-                    </>
-                  ) : (
-                    <span className="text-gray-500 italic">
-                      You have not Initiated this transaction
-                    </span>
-                  )}
+                    )}
+                  </td>
+                  <td className="border border-gray-300 px-4 py-2">
+                    {typeof history.file === "string" &&
+                    history.file.trim() !== "" ? (
+                      <img
+                        src={`http://localhost:5100/${history.file.replace(
+                          /\\/g,
+                          "/"
+                        )}`}
+                        alt="Transaction File"
+                        className="max-w-xs max-h-32 object-contain cursor-pointer"
+                        onClick={() => handleImageClick(history.file)}
+                      />
+                    ) : (
+                      <span>No file provided</span>
+                    )}
+                  </td>
+                  <td className="border border-gray-300 px-4 py-2">
+                    {userId === history.initiaterId ? (
+                      <>
+                        <button
+                          onClick={() => openEditForm(history)}
+                          className="text-yellow-500 hover:text-yellow-600"
+                          title="Edit"
+                        >
+                          <MdEdit className="text-xl" />
+                        </button>
+                        <button
+                          onClick={() => handleDelete(history._id)}
+                          className="text-red-500 hover:text-red-600"
+                          title="Delete"
+                        >
+                          <MdDelete className="text-xl" />
+                        </button>
+                      </>
+                    ) : (
+                      <span className="text-gray-500 italic">
+                        You have not initiated this transaction
+                      </span>
+                    )}
+                  </td>
+                </tr>
+              ))
+            ) : (
+              <tr>
+                <td colSpan="7" className="text-center py-4 text-gray-600">
+                  No transaction history available.
                 </td>
               </tr>
-            ))}
+            )}
           </tbody>
         </table>
       </div>
@@ -514,7 +540,7 @@ const History = () => {
           className="fixed inset-0 bg-black bg-opacity-75 flex justify-center items-center z-50"
           onClick={closeModal}
         >
-          <div className="bg-white p-4 rounded-lg w-3/4 max-h-[80vh] relative"> 
+          <div className="bg-white p-4 rounded-lg w-3/4 max-h-[80vh] relative">
             {/* ye hai frame */}
             <div
               className="relative w-full h-full"
@@ -540,13 +566,12 @@ const History = () => {
               </button>
 
               {/* Download Icon with increased size using inline style */}
-              <a
-                href={modalImage}
-                download
+              <button
+                onClick={handleDownload}
                 className="absolute bottom-0 -left-1 bg-white/10 backdrop-blur-lg	border rounded-full px-6 py-1 flex items-center justify-center text-3xl font-bold"
               >
                 <IoDownload />
-              </a>
+              </button>
             </div>
           </div>
         </div>

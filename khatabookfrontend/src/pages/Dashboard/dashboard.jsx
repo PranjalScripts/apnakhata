@@ -159,11 +159,14 @@ const Dashboard = () => {
   const transactionsFromSource = transactions.filter(
     (transaction) => transaction.source === "transaction"
   );
+  const clientsFromSource = transactions.filter(
+    (transaction) => transaction.source === "client"
+  );
 
   return (
     <div className="p-4 max-w-6xl mx-auto">
       <h1 className="text-2xl font-bold text-gray-800 mb-6">Transactions</h1>
-      {transactionsFromSource.length === 0 ? (
+      {transactionsFromSource.length === 0&& clientsFromSource.length===0 ? (
         <div className="flex flex-col items-center justify-center min-h-screen">
           <div className="text-lg font-bold text-gray-700 mb-4">
             No transactions found.
