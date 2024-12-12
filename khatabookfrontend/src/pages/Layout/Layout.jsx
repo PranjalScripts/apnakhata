@@ -2,6 +2,7 @@ import React from 'react';
 import { Outlet } from 'react-router-dom';
 import Header from './Header';
 import Sidebar from './sidebar';
+import Footer from './Footer';
 
 const Layout = () => {
     //   const location = useLocation();
@@ -20,6 +21,7 @@ const Layout = () => {
                 <div>
                     <Outlet />
                 </div>
+                <div><Footer/></div>
             </div>
         </div>
     );

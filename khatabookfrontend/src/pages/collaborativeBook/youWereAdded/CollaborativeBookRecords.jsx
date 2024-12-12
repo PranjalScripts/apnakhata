@@ -230,6 +230,7 @@ const handleDownload = async () => {
       id: entry._id,
       amount: entry.amount,
       transactionType: entry.transactionType,
+      description: entry.description,
     });
     setIsEditing(true);
   };
@@ -309,7 +310,9 @@ const handleDownload = async () => {
             </tr>
             <tr>
               <td className="px-4 py-2 font-medium text-gray-700">User Name</td>
-              <td className="px-4 py-2">{transaction.userId}</td>
+              <td className="px-4 py-2">{transaction.userId.name}</td>
+              <td className="px-4 py-2 font-medium text-gray-700">Other User</td>
+              <td className="px-4 py-2">{transaction.clientUserId.name}</td>
             </tr>
             <tr className="border-t border-gray-200">
               <td className="px-4 py-2 font-medium text-gray-700">
@@ -337,7 +340,7 @@ const handleDownload = async () => {
 
       <div className="flex space-x-4 mb-6">
         <button
-          className="bg-green-500 text-white px-4 py-2 rounded hover:bg-green-600"
+          className="bg-red-500 text-white px-4 py-2 rounded hover:bg-red-600"
           onClick={() => {
             setShowForm(true);
             setFormData((prev) => ({
@@ -349,7 +352,7 @@ const handleDownload = async () => {
           You Will Give
         </button>
         <button
-          className="bg-red-500 text-white px-4 py-2 rounded hover:bg-red-600"
+          className="bg-green-500 text-white px-4 py-2 rounded hover:bg-green-600"
           onClick={() => {
             setShowForm(true);
             setFormData((prev) => ({
@@ -358,7 +361,7 @@ const handleDownload = async () => {
             }));
           }}
         >
-          You Will Get
+          You Will get
         </button>
       </div>
 
@@ -450,9 +453,7 @@ const handleDownload = async () => {
                   <td className="px-4 py-2">{history.initiatedBy}</td>
 
                   <td className="px-4 py-2">
-                    {userId === history.initiaterId
-                      ? history.transactionType // Show the actual transaction type if user is the initiator
-                      : history.transactionType === "you will give"
+                    {history.transactionType === "you will give"
                       ? "You will get"
                       : "You will give"}{" "}
                   </td>

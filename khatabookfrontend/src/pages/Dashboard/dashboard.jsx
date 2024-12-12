@@ -191,9 +191,9 @@ const Dashboard = () => {
           <table className="min-w-full border-collapse border border-gray-300 bg-white shadow-md rounded-lg">
             <thead>
               <tr className="bg-gray-100 text-left text-gray-700">
-                <th className="border border-gray-300 px-4 py-2">Name</th>
-                <th className="border border-gray-300 px-4 py-2">Book Name</th>
-                <th className="border border-gray-300 px-4 py-2">
+                <th className="border border-gray-300 px-2 py-2">Name</th>
+                <th className="border border-gray-300 px-2 py-2">Book Name</th>
+                <th className="border border-gray-300 px-2 py-2">
                   You Will Get
                 </th>
                 <th className="border border-gray-300 px-4 py-2">
@@ -210,7 +210,7 @@ const Dashboard = () => {
             <tbody>
               {transactions.map((transaction, index) => (
                 <tr key={index} className="hover:bg-gray-50">
-                  <td className="border border-gray-300 px-4 py-5 flex items-center space-x-2">
+                  <td className="border border-gray-30 p-2  flex items-center space-x-2">
                     {transaction.source === "client"
                       ? transaction.userId?.name || "N/A"
                       : transaction.clientUserId?.name || "N/A"}

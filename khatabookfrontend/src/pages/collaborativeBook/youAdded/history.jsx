@@ -98,14 +98,19 @@ const History = () => {
       return;
     }
 
-    const transactionData = {
-      clientUserId: transaction.clientUserId,
-      bookId: transaction.bookId,
-      transactionType: selectedTransactionType,
-      amount: parsedAmount,
-      description: newTransaction.description,
-      transactionId,
-    };
+    // Create a FormData object for file upload
+    const formData = new FormData();
+    formData.append("clientUserId", transaction.clientUserId._id);
+    formData.append("bookId", transaction.bookId._id);
+    formData.append("transactionType", selectedTransactionType);
+    formData.append("amount", parsedAmount);
+    formData.append("description", newTransaction.description);
+    formData.append("transactionId", transactionId);
+
+    // Add the file if it exists
+    if (newTransaction.file) {
+      formData.append("file", newTransaction.file); // The 'file' key should match your backend file field
+    }
 
     try {
       const response = await fetch(
@@ -113,10 +118,9 @@ const History = () => {
         {
           method: "POST",
           headers: {
-            "Content-Type": "application/json",
             Authorization: `Bearer ${token}`,
           },
-          body: JSON.stringify(transactionData),
+          body: formData, // Use FormData instead of JSON.stringify
         }
       );
 
@@ -130,7 +134,7 @@ const History = () => {
           ],
         }));
         alert("Transaction added successfully!");
-        setNewTransaction({ amount: "", description: "" });
+        setNewTransaction({ amount: "", description: "", file: null });
         setShowForm(false);
       } else {
         console.error("Failed to add transaction");
@@ -173,7 +177,8 @@ const handleDownload = async () => {
   } catch (error) {
     console.error("Download failed:", error);
   }
-};
+  };
+  
   //delete transaction
   const handleDelete = async (entryId) => {
     const token = localStorage.getItem("token");
@@ -210,6 +215,7 @@ const handleDownload = async () => {
       id: entry._id,
       amount: entry.amount,
       transactionType: entry.transactionType,
+      description: entry.description,
     });
     setIsEditing(true);
   };
@@ -218,47 +224,58 @@ const handleDownload = async () => {
     setIsEditing(false);
     setEditData({ id: null, amount: "", transactionType: "" });
   };//edit transaction submit
-  const handleEditSubmit = async (e) => {
-    e.preventDefault();
-    const { id, amount, transactionType } = editData;
+const handleEditSubmit = async (e) => {
+  e.preventDefault();
+  const { id, amount, transactionType, description, file } = editData;
 
-    const token = localStorage.getItem("token");
-    const updatedData = {
-      amount: parseFloat(amount),
-      transactionType: transactionType.toLowerCase(),
-    };
+  const token = localStorage.getItem("token");
 
-    try {
-      const response = await fetch(
-        `http://localhost:5100/api/collab-transactions/transactions/${transactionId}/entries/${id}`,
-        {
-          method: "PATCH",
-          headers: {
-            "Content-Type": "application/json",
-            Authorization: `Bearer ${token}`,
-          },
-          body: JSON.stringify(updatedData),
-        }
-      );
+  // Create FormData object for file upload and other data
+  const formData = new FormData();
+  formData.append("amount", parseFloat(amount));
+  formData.append("transactionType", transactionType.toLowerCase());
+  formData.append("description", description);
 
-      if (response.ok) {
-        const updatedEntry = await response.json();
-        setTransaction((prev) => ({
-          ...prev,
-          transactionHistory: prev.transactionHistory.map((history) =>
-            history._id === id ? { ...history, ...updatedEntry.data } : history
-          ),
-        }));
-        alert("Transaction updated successfully!");
-        closeEditForm();
-      } else {
-        alert("Failed to update the transaction. Please try again.");
+  // Add the file if it exists
+  if (file) {
+    formData.append("file", file); // The key 'file' must match the backend field
+  }
+
+  try {
+    const response = await fetch(
+      `http://localhost:5100/api/collab-transactions/transactions/${transactionId}/entries/${id}`,
+      {
+        method: "PATCH",
+        headers: {
+          Authorization: `Bearer ${token}`, // Note: 'Content-Type' is automatically set for FormData
+        },
+        body: formData,
       }
-    } catch (error) {
-      console.error("Error updating transaction:", error);
-      alert("An error occurred while updating the transaction.");
+    );
+
+    if (response.ok) {
+      const updatedEntry = await response.json();
+      setTransaction((prev) => ({
+        ...prev,
+        transactionHistory: prev.transactionHistory.map((history) =>
+          history._id === id ? { ...history, ...updatedEntry.data } : history
+        ),
+      }));
+      alert("Transaction updated successfully!");
+     
+      closeEditForm();
+      window.location.reload();
+
+    } else {
+      alert("Failed to update the transaction. Please try again.");
     }
-  };
+  } catch (error) {
+    console.error("Error updating transaction:", error);
+    alert("An error occurred while updating the transaction.");
+  }
+};
+
+
 //handle image click
   const handleImageClick = (imagePath) => {
     setModalImage(`http://localhost:5100/${imagePath.replace(/\\/g, "/")}`);
@@ -276,21 +293,17 @@ const handleDownload = async () => {
         Transaction Details
       </h1>
       <div className="mb-4">
-        <p>
-          <strong>Transaction ID:</strong> {transaction._id}
-        </p>
+       
         <p>
           <strong>Book Name:</strong> {transaction.bookId.bookname}
         </p>
         <p>
-          <strong>User Name:</strong> {transaction.userId}
+          <strong>User Name:</strong> {transaction.userId.name}
         </p>
         <p>
           <strong>Client Name:</strong> {transaction.clientUserId.name}
         </p>
-        <p>
-          <strong>Transaction Type:</strong> {transaction.transactionType}
-        </p>
+         
         <p>
           <strong>Outstanding Balance:</strong> {transaction.outstandingBalance}
         </p>
@@ -351,7 +364,16 @@ const handleDownload = async () => {
                 })
               }
               className="border rounded px-4 py-2"
-              required
+            />
+
+            <input
+              type="file"
+              onChange={(e) =>
+                setNewTransaction((prev) => ({
+                  ...prev,
+                  file: e.target.files[0], // Store the file in state
+                }))
+              }
             />
           </div>
           <button
@@ -397,11 +419,7 @@ const handleDownload = async () => {
                     {history.initiatedBy}
                   </td>
                   <td className="border border-gray-300 px-4 py-2">
-                    {userId === history.initiaterId
-                      ? history.transactionType // Show the actual transaction type if user is the initiator
-                      : history.transactionType === "you will give"
-                      ? "You will get"
-                      : "You will give"}
+                    {history.transactionType}
                   </td>
                   <td className="border border-gray-300 px-4 py-2">
                     {history.amount}
@@ -517,6 +535,29 @@ const handleDownload = async () => {
               <option value="you will give">You Will Give</option>
             </select>
           </div>
+          <input
+            type="file"
+            onChange={(e) =>
+              setEditData((prev) => ({
+                ...prev,
+                file: e.target.files[0], // Store the file in state
+              }))
+            }
+          />
+
+          <input
+            type="text"
+            placeholder="Enter transaction description"
+            value={editData.description}
+            onChange={(e) =>
+              setEditData((prev) => ({
+                ...prev,
+                description: e.target.value, // Update the description in state
+              }))
+            }
+            className="border rounded px-4 py-2"
+          />
+
           <div className="flex gap-4">
             <button
               type="submit"

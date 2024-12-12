@@ -60,7 +60,7 @@ const Home = () => {
   }
   
   return (
-    <>
+    <div>
       <div className="p-6 bg-gray-100 min-h-screen w-full">
         {/* Top Summary Section */}
         <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-6">
@@ -101,15 +101,15 @@ const Home = () => {
           <TransactionDetails />
         </div>
       </div>
-      <div className="flex justify-center p-3">
+      <div className="flex justify-center p-3 mb-16">
         <button
-          className="border border-black rounded-2xl p-5 hover:text-white hover:bg-blue-900"
+          className="border border-black rounded-3xl px-4 py-2 hover:text-white hover:bg-blue-900"
           onClick={handleDashboardClick}
         >
           Go to DashBoard
         </button>
       </div>
-    </>
+    </div>
   );
 };
 

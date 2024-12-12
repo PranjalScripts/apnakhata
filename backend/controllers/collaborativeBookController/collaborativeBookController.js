@@ -35,37 +35,73 @@ const getTransactions = async (req, res) => {
   }
 };
 // Fetch transactions for a client
+// const getTransactionstoclient = async (req, res) => {
+//   try {
+//     // Assuming the client/user is logged in and their ID is available via the session or token
+//     const loggedInUserId = req.user.id; // The logged-in user's ID (could be a client ID when logged in)
+
+//     // Step 1: Get the client by email
+//     const client = await Client.findOne({ email: req.user.email });
+//     if (!client) {
+//       return res.status(404).json({ message: "Client not found" });
+//     }
+
+//     // Step 2: Find the user by email (User model) - to ensure that this client is treated as a user
+//     const user = await User.findOne({ email: req.user.email });
+//     if (!user) {
+//       return res.status(404).json({ message: "User not found" });
+//     }
+
+//     // Step 3: Query the Transaction model to get transactions for this user/client
+//     const transactions = await Transaction.find({
+//       // Match transaction where the user is involved
+//       clientUserId: client._id, // Match transaction where the client is involved
+//     })
+//       .populate({
+//         path: "userId",
+//         select: "-password", // Exclude the password field
+//       })
+//       .populate("clientUserId bookId") // Populate related user, client, and book details
+//       .lean(); // Returns plain JavaScript objects (without Mongoose's internal properties)
+
+//     if (transactions.length === 0) {
+//       return res.status(404).json({ message: "No transactions found." });
+//     }
+
+//     res.status(200).json({ transactions });
+//   } catch (error) {
+//     console.error(error);
+//     res.status(500).json({ error: error.message });
+//   }
+// };
 const getTransactionstoclient = async (req, res) => {
   try {
-    // Assuming the client/user is logged in and their ID is available via the session or token
-    const loggedInUserId = req.user.id; // The logged-in user's ID (could be a client ID when logged in)
-
-    // Step 1: Get the client by email
-    const client = await Client.findOne({ email: req.user.email });
-    if (!client) {
-      return res.status(404).json({ message: "Client not found" });
+    // Step 1: Find all clients with the same email as the logged-in user
+    const clients = await Client.find({ email: req.user.email });
+    if (!clients || clients.length === 0) {
+      return res
+        .status(404)
+        .json({ message: "No clients found with this email." });
     }
 
-    // Step 2: Find the user by email (User model) - to ensure that this client is treated as a user
-    const user = await User.findOne({ email: req.user.email });
-    if (!user) {
-      return res.status(404).json({ message: "User not found" });
-    }
+    // Collect all client IDs to use in the query
+    const clientIds = clients.map((client) => client._id);
 
-    // Step 3: Query the Transaction model to get transactions for this user/client
+    // Step 2: Query the Transaction model to get all transactions related to any of these client IDs
     const transactions = await Transaction.find({
-      // Match transaction where the user is involved
-      clientUserId: client._id, // Match transaction where the client is involved
+      clientUserId: { $in: clientIds }, // Match transactions where the client is involved
     })
       .populate({
         path: "userId",
         select: "-password", // Exclude the password field
       })
       .populate("clientUserId bookId") // Populate related user, client, and book details
-      .lean(); // Returns plain JavaScript objects (without Mongoose's internal properties)
+      .lean(); // Returns plain JavaScript objects
 
     if (transactions.length === 0) {
-      return res.status(404).json({ message: "No transactions found." });
+      return res
+        .status(404)
+        .json({ message: "No transactions found for this email." });
     }
 
     res.status(200).json({ transactions });
@@ -74,6 +110,7 @@ const getTransactionstoclient = async (req, res) => {
     res.status(500).json({ error: error.message });
   }
 };
+
 // Create a new transaction
  
 
@@ -308,7 +345,12 @@ const confirmTransaction = async (req, res) => {
 const getTransactionById = async (req, res) => {
   try {
     const { id } = req.params;
-    const transaction = await Transaction.findById(id);
+    const transaction = await Transaction.findById(id)
+      .populate({
+        path: "userId", // Field to populate
+        select: "-password", // Exclude the password field
+      })
+      .populate("clientUserId bookId"); 
 
     if (!transaction) {
       return res.status(404).json({
@@ -418,118 +460,7 @@ const addExistingTransaction = async (req, res) => {
     });
   }
 };
-
-// const updateTransaction = async (req, res) => {
-
-//   try {
-//     const { transactionId, entryId } = req.params; // Transaction and entry IDs from URL params
-//     const { amount, description, transactionType } = req.body; // Fields to update
-
-//     const userId = req.user.id; // Get the user ID from the authenticated user
-
-//     // Validate input
-//     if (!transactionId || !entryId) {
-//       return res
-//         .status(400)
-//         .json({ message: "Missing required transaction IDs." });
-//     }
-
-//     if (amount !== undefined && (typeof amount !== "number" || amount <= 0)) {
-//       return res
-//         .status(400)
-//         .json({ message: "Amount must be a positive number." });
-//     }
-
-//     if (
-//       transactionType &&
-//       !["you will get", "you will give"].includes(transactionType)
-//     ) {
-//       return res
-//         .status(400)
-//         .json({ message: "Invalid transaction type provided." });
-//     }
-
-//     // Fetch the existing transaction
-//     const transaction = await Transaction.findById(transactionId);
-
-//     if (!transaction) {
-//       return res.status(404).json({ message: "Transaction not found." });
-//     }
-
-//     // Find the specific transaction entry to update
-//     const entry = transaction.transactionHistory.id(entryId);
-
-//     if (!entry) {
-//       return res.status(404).json({ message: "Transaction entry not found." });
-//     }
-
-//     // Prevent updates by users who did not initiate the entry
-//     if (entry.initiaterId.toString() !== userId) {
-//       return res
-//         .status(403)
-//         .json({
-//           message: "You are not authorized to update this transaction.",
-//         });
-//     }
-
-//     // Update the fields
-//     if (amount !== undefined) entry.amount = amount;
-//     if (description !== undefined) entry.description = description;
-//     if (transactionType !== undefined) entry.transactionType = transactionType;
-
-//     entry.transactionDate = new Date(); // Update transaction date to reflect changes
-//     entry.confirmationStatus = "pending"; // Reset confirmation status to "pending" after updates
-
-//     // Save the updated transaction
-//     await transaction.save();
-
-//     res.status(200).json({
-//       message: "Transaction updated successfully.",
-//       transaction,
-//     });
-
-//     // Send notification to the client about the update
-//     const client = await Client.findById(transaction.clientUserId); // Assuming clientUserId is the client's unique ID
-
-//     if (!client) {
-//       return res.status(404).json({
-//         message: "Client not found.",
-//       });
-//     }
-
-//     const notificationData = {
-//       notificationId: "apnakhata_63_07", // Update notification ID if necessary
-//       user: {
-//         id: transaction.clientUserId, // User ID or unique identifier
-//         email: client.email, // Provide the client's email from the client model
-//         number: client.mobile, // Provide the client's phone number from the client model
-//       },
-//       mergeTags: {
-//         transactionType: entry.transactionType,
-//         amount: entry.amount.toFixed(2),
-//         description: entry.description,
-//         initiatedBy: entry.initiatedBy,
-//         date: new Date().toLocaleDateString(),
-//       },
-//     };
-
-//     try {
-//       await notificationapi.send(notificationData);
-//       console.log("Update notification sent successfully!");
-//     } catch (notifyError) {
-//       console.error("Error sending update notification:", notifyError);
-//     }
-//   } catch (error) {
-//     console.error("Error updating transaction:", error);
-//     res.status(500).json({ error: error.message });
-//   }
-// }
-
-
-
-
-// Delete a transaction entry
-
+ 
 
 const updateTransaction = async (req, res) => {
   try {
