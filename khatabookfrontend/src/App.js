@@ -22,7 +22,7 @@ import YourBooks from "./pages/selfRecord/yourBooks";
 import SelfRecordByBookID from "./pages/selfRecord/selfrecordbyBookID";
 import TransactionHistory from "./pages/selfRecord/history";
 import PageNotFound from "./pages/pageNotFound/PageNotFound"
-import Dashboard from "./pages/DashBoard/DashBoard"
+import DashBoard from "./pages/DashBoard/DashBoard.jsx"
 
 function App() {
   return (
@@ -34,7 +34,7 @@ function App() {
         {/* Dashboard and other pages using Layout */}
         <Route path="/" element={<Layout />}>
           <Route path="home" element={<Home />} />
-          <Route path="dashboard" element={<Dashboard />} />
+          <Route path="dashboard" element={<DashBoard />} />
           <Route path="your-books" element={<YourBooks />} />
           <Route path="/your-books/:bookId" element={<SelfRecordByBookID />} />
           <Route

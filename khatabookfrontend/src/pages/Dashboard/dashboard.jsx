@@ -6,7 +6,7 @@ import {
   AiOutlinePlus,
 } from "react-icons/ai"; // Import arrows and plus icon
 
-const Dashboard = () => {
+const DashBoard = () => {
   const [transactions, setTransactions] = useState([]);
   const [loading, setLoading] = useState(true);
   const navigate = useNavigate();
@@ -267,4 +267,4 @@ const Dashboard = () => {
   );
 };
 
-export default Dashboard;
+export default DashBoard;
