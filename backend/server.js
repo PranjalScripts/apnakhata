@@ -11,9 +11,7 @@ const collabtransactionRoutes = require("./routes/transactionRoutes/collabtransa
 const selftransactionRoutes = require("./routes/transactionRoutes/selfrecord");
 const path = require("path");
 
-// Serve static files from the "uploads" folder
-
-  // config dot env file
+ 
 dotenv.config();
  
 //databse call
