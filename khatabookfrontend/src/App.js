@@ -22,7 +22,7 @@ import YourBooks from "./pages/selfRecord/yourBooks";
 import SelfRecordByBookID from "./pages/selfRecord/selfrecordbyBookID";
 import TransactionHistory from "./pages/selfRecord/history";
 import PageNotFound from "./pages/pageNotFound/PageNotFound"
-import DashBoard from "./pages/DashBoard/DashBoard.jsx"
+import DashBoard from "./pages/DashBoard/DashBoard"
 
 function App() {
   return (
