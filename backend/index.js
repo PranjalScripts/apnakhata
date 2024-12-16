@@ -23,7 +23,13 @@ const app = express();
 //middlewares
 app.use(morgan("dev"));
 app.use(express.json());
-app.use(cors());
+app.use(
+  cors({
+    origin: "*", // Or explicitly specify your frontend's URL
+    methods: "GET,POST,PUT,DELETE,OPTIONS",
+    allowedHeaders: "Content-Type, Authorization",
+  })
+);
 //api for authentications
 app.use("/api/v1/auth", userRoutes);
 app.use("/uploads", express.static(path.join(__dirname, "uploads")));
