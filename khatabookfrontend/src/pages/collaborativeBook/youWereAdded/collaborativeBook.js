@@ -7,7 +7,7 @@ const CollaborativeBook = () => {
 
   useEffect(() => {
      const token = localStorage.getItem("token");
-    fetch("http://localhost:5100/api/collab-transactions/client-transactions", {
+    fetch(`${process.env.REACT_APP_URL}/api/collab-transactions/client-transactions`, {
       headers: { Authorization: `Bearer ${token}` },
     })
       .then((response) => response.json())

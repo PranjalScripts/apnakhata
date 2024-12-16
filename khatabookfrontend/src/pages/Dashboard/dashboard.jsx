@@ -17,14 +17,17 @@ const Dashboard = () => {
       try {
         const [clientTransactionsRes, transactionsRes] = await Promise.all([
           fetch(
-            "http://localhost:5100/api/collab-transactions/client-transactions",
+            `${process.env.REACT_APP_URL}/api/collab-transactions/client-transactions`,
             {
               headers: { Authorization: `Bearer ${token}` },
             }
           ),
-          fetch("http://localhost:5100/api/collab-transactions/transactions", {
-            headers: { Authorization: `Bearer ${token}` },
-          }),
+          fetch(
+            `${process.env.REACT_APP_URL}/api/collab-transactions/transactions`,
+            {
+              headers: { Authorization: `Bearer ${token}` },
+            }
+          ),
         ]);
 
         const clientTransactions = await clientTransactionsRes.json();

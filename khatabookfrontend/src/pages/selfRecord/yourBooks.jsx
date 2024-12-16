@@ -11,21 +11,9 @@ const YourBooks = () => {
   const [editingBook, setEditingBook] = useState(null);
   const [isModalOpen, setIsModalOpen] = useState(false);
   const navigate = useNavigate(); // Hook for navigation
+ 
 
-  const excludedColors = ["#FFFFFF", "#FF0000", "#0000FF"];
-
-  const getRandomColor = () => {
-    let color;
-    do {
-      color = `#${Math.floor(Math.random() * 16777215).toString(16)}`;
-    } while (
-      excludedColors.some(
-        (excludedColors) =>
-          parseInt(excludedColors.slice(1), 16) === parseInt(color.slice(1), 16)
-      )
-    );
-    return color;
-  };
+  
 
   useEffect(() => {
     const fetchBooks = async () => {
@@ -67,10 +55,8 @@ const YourBooks = () => {
           <div
             key={book._id}
             onClick={() => navigate(`/your-books/${book._id}`)} // Navigate on click
-            className="relative flex flex-col items-center justify-center text-white shadow-md rounded-full p-6 hover:shadow-lg transform hover:scale-105 transition duration-200 cursor-pointer"
-            style={{
-              backgroundColor: getRandomColor(),
-            }}
+            className="relative flex bg-blue-500 flex-col items-center justify-center text-white shadow-md rounded-full p-6 hover:shadow-lg transform hover:scale-105 transition duration-200 cursor-pointer"
+             
           >
             <h2 className="text-lg font-semibold text-center">
               {book.bookname}

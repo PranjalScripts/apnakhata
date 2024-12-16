@@ -213,7 +213,10 @@ exports.deleteTransaction = async (req, res) => {
   }
 };
  
- exports.getTransactionsByBookId = async (req, res) => {
+const mongoose = require("mongoose");
+ 
+
+exports.getTransactionsByBookId = async (req, res) => {
   const { bookId } = req.params;
 
   try {
@@ -222,21 +225,35 @@ exports.deleteTransaction = async (req, res) => {
       return res.status(400).json({ message: "Book ID is required." });
     }
 
+    // Validate bookId format
+    if (!mongoose.Types.ObjectId.isValid(bookId)) {
+      return res.status(400).json({ message: "Invalid Book ID format." });
+    }
+
     // Find transactions with the given bookId
     const transactions = await Transaction.find({ bookId })
       .populate("userId", "name email") // Populate user details
       .populate("clientUserId", "name email mobile") // Populate client user details
       .sort({ createdAt: -1 }); // Sort by creation date (most recent first)
 
+    // If no transactions are found, return an empty array
     if (!transactions || transactions.length === 0) {
-      return res.status(404).json({ message: "No transactions found for this book ID." });
+      return res.status(200).json({
+        success: true,
+        transactions: [],
+      });
     }
 
-    res.status(200).json({ success: true, transactions });
+    // Return transactions
+    res.status(200).json({
+      success: true,
+      transactions,
+    });
   } catch (error) {
     console.error("Error fetching transactions:", error);
-    res.status(500).json({ message: "An error occurred while fetching transactions.", error: error.message });
+    res.status(500).json({
+      message: "An error occurred while fetching transactions.",
+      error: error.message,
+    });
   }
 };
-
- 

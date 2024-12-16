@@ -11,7 +11,7 @@ const YouAdded = () => {
       const token = localStorage.getItem("token");
       try {
         const response = await fetch(
-          "http://localhost:5100/api/collab-transactions/transactions",
+          `${process.env.REACT_APP_URL}/api/collab-transactions/transactions`,
           {
             headers: { Authorization: `Bearer ${token}` },
           }

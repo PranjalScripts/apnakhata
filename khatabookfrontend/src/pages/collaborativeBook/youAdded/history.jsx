@@ -25,13 +25,13 @@ const History = () => {
     description: "",
   });
   const userId = localStorage.getItem("userId");
-//fetch transaction
+  //fetch transaction
   useEffect(() => {
     const fetchTransaction = async () => {
       const token = localStorage.getItem("token");
       try {
         const response = await fetch(
-          `http://localhost:5100/api/collab-transactions/single-transaction/${transactionId}`,
+          `${process.env.REACT_APP_URL}/api/collab-transactions/single-transaction/${transactionId}`,
           {
             headers: { Authorization: `Bearer ${token}` },
           }
@@ -51,13 +51,13 @@ const History = () => {
 
     fetchTransaction();
   }, [transactionId]);
-//update transaction 
+  //update transaction
   const updateTransactionStatus = async (entryId) => {
     setUpdating(true);
     const token = localStorage.getItem("token");
     try {
       const response = await fetch(
-        `http://localhost:5100/api/collab-transactions/transactions/${transactionId}/entries/${entryId}/confirm`,
+        `${process.env.REACT_APP_URL}/api/collab-transactions/transactions/${transactionId}/entries/${entryId}/confirm`,
         {
           method: "PATCH",
           headers: { Authorization: `Bearer ${token}` },
@@ -84,7 +84,7 @@ const History = () => {
       setUpdating(false);
     }
   };
-//add transaction into transaction history
+  //add transaction into transaction history
   const handleAddTransaction = async () => {
     if (!transaction) return;
 
@@ -114,7 +114,7 @@ const History = () => {
 
     try {
       const response = await fetch(
-        "http://localhost:5100/api/collab-transactions/create-transactions",
+        `${process.env.REACT_APP_URL}/api/collab-transactions/create-transactions`,
         {
           method: "POST",
           headers: {
@@ -155,37 +155,36 @@ const History = () => {
     );
   }
 
- 
   //download file
-const handleDownload = async () => {
-  try {
-    // Extract the file name from the URL
-    const urlParts = modalImage.split("/");
-    const fileName = urlParts[urlParts.length - 1]; // Get the last part of the URL as the file name
+  const handleDownload = async () => {
+    try {
+      // Extract the file name from the URL
+      const urlParts = modalImage.split("/");
+      const fileName = urlParts[urlParts.length - 1]; // Get the last part of the URL as the file name
 
-    // Fetch the file
-    const response = await fetch(modalImage);
-    if (!response.ok) {
-      throw new Error("Failed to fetch the file");
+      // Fetch the file
+      const response = await fetch(modalImage);
+      if (!response.ok) {
+        throw new Error("Failed to fetch the file");
+      }
+
+      // Convert the response to a Blob
+      const blob = await response.blob();
+
+      // Save the file with its original name and format
+      saveAs(blob, fileName);
+    } catch (error) {
+      console.error("Download failed:", error);
     }
-
-    // Convert the response to a Blob
-    const blob = await response.blob();
-
-    // Save the file with its original name and format
-    saveAs(blob, fileName);
-  } catch (error) {
-    console.error("Download failed:", error);
-  }
   };
-  
+
   //delete transaction
   const handleDelete = async (entryId) => {
     const token = localStorage.getItem("token");
     if (window.confirm("Are you sure you want to delete this transaction?")) {
       try {
         const response = await fetch(
-          `http://localhost:5100/api/collab-transactions/transactions/${transactionId}/entries/${entryId}`,
+          `${process.env.REACT_APP_URL}/api/collab-transactions/transactions/${transactionId}/entries/${entryId}`,
           {
             method: "DELETE",
             headers: { Authorization: `Bearer ${token}` },
@@ -223,65 +222,65 @@ const handleDownload = async () => {
   const closeEditForm = () => {
     setIsEditing(false);
     setEditData({ id: null, amount: "", transactionType: "" });
-  };//edit transaction submit
-const handleEditSubmit = async (e) => {
-  e.preventDefault();
-  const { id, amount, transactionType, description, file } = editData;
+  }; //edit transaction submit
+  const handleEditSubmit = async (e) => {
+    e.preventDefault();
+    const { id, amount, transactionType, description, file } = editData;
 
-  const token = localStorage.getItem("token");
+    const token = localStorage.getItem("token");
 
-  // Create FormData object for file upload and other data
-  const formData = new FormData();
-  formData.append("amount", parseFloat(amount));
-  formData.append("transactionType", transactionType.toLowerCase());
-  formData.append("description", description);
+    // Create FormData object for file upload and other data
+    const formData = new FormData();
+    formData.append("amount", parseFloat(amount));
+    formData.append("transactionType", transactionType.toLowerCase());
+    formData.append("description", description);
 
-  // Add the file if it exists
-  if (file) {
-    formData.append("file", file); // The key 'file' must match the backend field
-  }
-
-  try {
-    const response = await fetch(
-      `http://localhost:5100/api/collab-transactions/transactions/${transactionId}/entries/${id}`,
-      {
-        method: "PATCH",
-        headers: {
-          Authorization: `Bearer ${token}`, // Note: 'Content-Type' is automatically set for FormData
-        },
-        body: formData,
-      }
-    );
-
-    if (response.ok) {
-      const updatedEntry = await response.json();
-      setTransaction((prev) => ({
-        ...prev,
-        transactionHistory: prev.transactionHistory.map((history) =>
-          history._id === id ? { ...history, ...updatedEntry.data } : history
-        ),
-      }));
-      alert("Transaction updated successfully!");
-     
-      closeEditForm();
-      window.location.reload();
-
-    } else {
-      alert("Failed to update the transaction. Please try again.");
+    // Add the file if it exists
+    if (file) {
+      formData.append("file", file); // The key 'file' must match the backend field
     }
-  } catch (error) {
-    console.error("Error updating transaction:", error);
-    alert("An error occurred while updating the transaction.");
-  }
-};
 
+    try {
+      const response = await fetch(
+        `${process.env.REACT_APP_URL}/api/collab-transactions/transactions/${transactionId}/entries/${id}`,
+        {
+          method: "PATCH",
+          headers: {
+            Authorization: `Bearer ${token}`, // Note: 'Content-Type' is automatically set for FormData
+          },
+          body: formData,
+        }
+      );
 
-//handle image click
+      if (response.ok) {
+        const updatedEntry = await response.json();
+        setTransaction((prev) => ({
+          ...prev,
+          transactionHistory: prev.transactionHistory.map((history) =>
+            history._id === id ? { ...history, ...updatedEntry.data } : history
+          ),
+        }));
+        alert("Transaction updated successfully!");
+
+        closeEditForm();
+        window.location.reload();
+      } else {
+        alert("Failed to update the transaction. Please try again.");
+      }
+    } catch (error) {
+      console.error("Error updating transaction:", error);
+      alert("An error occurred while updating the transaction.");
+    }
+  };
+
+  //handle image click
   const handleImageClick = (imagePath) => {
-    setModalImage(`http://localhost:5100/${imagePath.replace(/\\/g, "/")}`);
+    setModalImage(
+      `${process.env.REACT_APP_URL}/${imagePath.replace(/\\/g, "/")}`
+    );
     setIsModalOpen(true);
   };
-//close modal
+  //close modal
   const closeModal = () => {
     setIsModalOpen(false);
     setModalImage(null);
@@ -293,7 +292,6 @@ const handleEditSubmit = async (e) => {
         Transaction Details
       </h1>
       <div className="mb-4">
-       
         <p>
           <strong>Book Name:</strong> {transaction.bookId.bookname}
         </p>
@@ -303,7 +301,7 @@ const handleEditSubmit = async (e) => {
         <p>
           <strong>Client Name:</strong> {transaction.clientUserId.name}
         </p>
-         
+
         <p>
           <strong>Outstanding Balance:</strong> {transaction.outstandingBalance}
         </p>
@@ -453,10 +451,9 @@ const handleEditSubmit = async (e) => {
                     {typeof history.file === "string" &&
                     history.file.trim() !== "" ? (
                       <img
-                        src={`http://localhost:5100/${history.file.replace(
-                          /\\/g,
-                          "/"
-                        )}`}
+                        src={`${
+                          process.env.REACT_APP_URL
+                        }/${history.file.replace(/\\/g, "/")}`}
                         alt="Transaction File"
                         className="max-w-xs max-h-32 object-contain cursor-pointer"
                         onClick={() => handleImageClick(history.file)}

@@ -1,64 +1,40 @@
-import React, { useState, useEffect} from "react";
+import React, { useState, useEffect } from "react";
 import { useNavigate } from "react-router-dom";
+import { motion, LazyMotion, domAnimation } from "framer-motion";
+import Modal from "./Modal";
+import { fetchClients, fetchBooks, createTransaction } from "./api";
+
 const AddTransactions = () => {
-  // State variables for form data
   const [clientUserId, setClientUserId] = useState("");
   const [bookId, setBookId] = useState("");
   const [transactionType, setTransactionType] = useState("");
-  const [amount, setAmount] = useState(""); // Amount will be treated as a number
+  const [amount, setAmount] = useState("");
   const [description, setDescription] = useState("");
- const navigate = useNavigate();
+  const navigate = useNavigate();
 
-  const [clients, setClients] = useState([]); // To store client data
-  const [books, setBooks] = useState([]); // To store book data
+  const [clients, setClients] = useState([]);
+  const [books, setBooks] = useState([]);
+  const [isLoadingClients, setIsLoadingClients] = useState(true);
+  const [isLoadingBooks, setIsLoadingBooks] = useState(true);
+  const [showSuccessModal, setShowSuccessModal] = useState(false);
+  const [showFailureModal, setShowFailureModal] = useState(false);
 
-  const [isLoadingClients, setIsLoadingClients] = useState(true); // Loading state for clients
-  const [isLoadingBooks, setIsLoadingBooks] = useState(true); // Loading state for books
-
-  // Fetch clients and books on component mount
   useEffect(() => {
-    const fetchClients = async () => {
-      const token = localStorage.getItem("token");
+    const loadClients = async () => {
       try {
-        const response = await fetch(
-          `${process.env.REACT_APP_URL}/api/v3/client/getAll-clients`,
-          {
-            headers: { Authorization: `Bearer ${token}` },
-          }
-        );
-        const data = await response.json();
-        console.log(data); // Log the entire response to check the structure
-        if (data.success && Array.isArray(data.data)) {
-          setClients(data.data); // Access the 'data' array in the response
-        } else {
-          console.error("Unexpected response structure:", data);
-          alert("No clients found.");
-        }
+        const clientsData = await fetchClients();
+        setClients(clientsData);
       } catch (error) {
         console.error("Error fetching clients:", error);
-        alert("Error fetching clients.");
       } finally {
         setIsLoadingClients(false);
       }
     };
 
-    const fetchBooks = async () => {
-      const token = localStorage.getItem("token");
+    const loadBooks = async () => {
       try {
-        const response = await fetch(
-          `${process.env.REACT_APP_URL}/api/v2/transactionBooks/getAll-books`,
-          {
-            headers: { Authorization: `Bearer ${token}` },
-          }
-        );
-        const data = await response.json();
-        console.log(data); // Log the data to inspect its structure
-
-        if (Array.isArray(data.books)) {
-          setBooks(data.books); // Set books only if the data is an array
-        } else {
-          console.error("Expected an array of books but got:", data);
-        }
+        const booksData = await fetchBooks();
+        setBooks(booksData);
       } catch (error) {
         console.error("Error fetching books:", error);
       } finally {
@@ -66,70 +42,45 @@ const AddTransactions = () => {
       }
     };
 
-    fetchClients();
-    fetchBooks();
+    loadClients();
+    loadBooks();
   }, []);
 
   const handleSubmit = async (event) => {
     event.preventDefault();
-
-    // Ensure amount is a valid number
-    const parsedAmount = parseFloat(amount); // Convert amount to a number
-
+    const parsedAmount = parseFloat(amount);
     if (isNaN(parsedAmount)) {
-      alert("Please enter a valid amount");
+      setShowFailureModal(true);
       return;
     }
 
-    // Prepare the request body
     const transactionData = {
       clientUserId,
       bookId,
       transactionType,
-      amount: parsedAmount, // Store amount as a number
+      amount: parsedAmount,
       description,
-       
     };
 
-    // Send the POST request to create a transaction
     try {
-      const token = localStorage.getItem("token"); // Assuming you're using JWT token for authentication
-      const response = await fetch(
-        "http://localhost:5100/api/collab-transactions/create-transactions",
-        {
-          method: "POST",
-          headers: {
-            "Content-Type": "application/json",
-            Authorization: `Bearer ${token}`,
-          },
-          body: JSON.stringify(transactionData),
-        }
-      );
-
-      if (response.ok) {
-        alert("Transaction created successfully");
-        // Reset the form or handle the response
-      } else {
-        alert("Failed to create transaction");
-      }
+      await createTransaction(transactionData);
+      setShowSuccessModal(true);
     } catch (error) {
       console.error("Error creating transaction:", error);
-      alert("An error occurred");
+      setShowFailureModal(true);
     }
   };
-  const Goback = () => { 
+
+  const Goback = () => {
     navigate(-1);
-  }
+  };
+
   return (
     <div className="container mx-auto p-4">
       <h1 className="text-2xl font-semibold mb-4">Add Transaction</h1>
-
       <form onSubmit={handleSubmit}>
         <div className="mb-4">
-          <label
-            htmlFor="clientUserId"
-            className="block text-sm font-medium text-gray-700"
-          >
+          <label htmlFor="clientUserId" className="block text-sm font-medium text-gray-700">
             Client
           </label>
           <select
@@ -155,10 +106,7 @@ const AddTransactions = () => {
         </div>
 
         <div className="mb-4">
-          <label
-            htmlFor="bookId"
-            className="block text-sm font-medium text-gray-700"
-          >
+          <label htmlFor="bookId" className="block text-sm font-medium text-gray-700">
             Book
           </label>
           <select
@@ -184,10 +132,7 @@ const AddTransactions = () => {
         </div>
 
         <div className="mb-4">
-          <label
-            htmlFor="transactionType"
-            className="block text-sm font-medium text-gray-700"
-          >
+          <label htmlFor="transactionType" className="block text-sm font-medium text-gray-700">
             Transaction Type
           </label>
           <select
@@ -204,10 +149,7 @@ const AddTransactions = () => {
         </div>
 
         <div className="mb-4">
-          <label
-            htmlFor="amount"
-            className="block text-sm font-medium text-gray-700"
-          >
+          <label htmlFor="amount" className="block text-sm font-medium text-gray-700">
             Amount
           </label>
           <input
@@ -221,10 +163,7 @@ const AddTransactions = () => {
         </div>
 
         <div className="mb-4">
-          <label
-            htmlFor="description"
-            className="block text-sm font-medium text-gray-700"
-          >
+          <label htmlFor="description" className="block text-sm font-medium text-gray-700">
             Description
           </label>
           <textarea
@@ -236,20 +175,33 @@ const AddTransactions = () => {
           />
         </div>
 
-        <button
-          type="submit"
-          className="bg-blue-500 text-white px-4 py-2 rounded-md"
-        >
+        <button type="submit" className="bg-blue-500 text-white px-4 py-2 rounded-md hover:bg-blue-600">
           Create Transaction
         </button>
         <button
-          type="submit"
-          className="bg-blue-500 text-white px-4 py-2 rounded-md"
+          type="button"
+          className="ml-4 bg-gray-500 text-white px-4 py-2 rounded-md hover:bg-gray-600"
           onClick={Goback}
         >
-           Go Back 
+          Go Back
         </button>
       </form>
+
+      {showSuccessModal && (
+        <Modal
+          type="success"
+          message="Transaction created successfully."
+          onClose={() => setShowSuccessModal(false)}
+        />
+      )}
+
+      {showFailureModal && (
+        <Modal
+          type="failure"
+          message="Failed to create transaction. Please try again."
+          onClose={() => setShowFailureModal(false)}
+        />
+      )}
     </div>
   );
 };
