@@ -5,6 +5,11 @@ body {
     sans-serif;
   -webkit-font-smoothing: antialiased;
   -moz-osx-font-smoothing: grayscale;
+  ::selection {
+    background-color: #b64aac; /* Change this to your desired color */
+    color: #ffffff; /* Optional: change text color */
+  }
+  
 }
 
 code {

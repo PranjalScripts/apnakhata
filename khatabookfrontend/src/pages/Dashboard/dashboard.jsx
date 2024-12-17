@@ -212,7 +212,7 @@
              </thead>
              <tbody>
                {transactions.map((transaction, index) => (
-                 <tr key={index} className="hover:bg-gray-50">
+                 <tr key={index} className="hover:bg-blue-300">
                    <td className="border border-gray-300 p-2 flex items-center space-x-2">
                      {transaction.source === "client"
                        ? transaction.userId?.name || "N/A"

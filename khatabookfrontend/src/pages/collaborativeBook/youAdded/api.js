@@ -30,17 +30,28 @@ export const fetchBooks = async () => {
   }
 };
 
-export const createTransaction = async (transactionData) => {
+export const createTransaction = async (transactionData, file) => {
   const token = localStorage.getItem("token");
+  const formData = new FormData();
+
+  // Append transaction data
+  for (const key in transactionData) {
+    formData.append(key, transactionData[key]);
+  }
+
+  // Append the file if provided
+  if (file) {
+    formData.append("file", file);
+  }
+
   const response = await fetch(
     `${process.env.REACT_APP_URL}/api/collab-transactions/create-transactions`,
     {
       method: "POST",
       headers: {
-        "Content-Type": "application/json",
         Authorization: `Bearer ${token}`,
       },
-      body: JSON.stringify(transactionData),
+      body: formData,
     }
   );
 

@@ -10,6 +10,7 @@ const AddTransactions = () => {
   const [transactionType, setTransactionType] = useState("");
   const [amount, setAmount] = useState("");
   const [description, setDescription] = useState("");
+  const [file, setFile] = useState(null); // State to store the file
   const navigate = useNavigate();
 
   const [clients, setClients] = useState([]);
@@ -63,11 +64,18 @@ const AddTransactions = () => {
     };
 
     try {
-      await createTransaction(transactionData);
+      await createTransaction(transactionData, file); // Pass the file to the API
       setShowSuccessModal(true);
     } catch (error) {
       console.error("Error creating transaction:", error);
       setShowFailureModal(true);
+    }
+  };
+
+  const handleFileChange = (e) => {
+    const selectedFile = e.target.files[0]; // Get the selected file
+    if (selectedFile) {
+      setFile(selectedFile); // Store it in the state
     }
   };
 
@@ -172,6 +180,18 @@ const AddTransactions = () => {
             onChange={(e) => setDescription(e.target.value)}
             className="mt-1 block w-full p-2 border border-gray-300 rounded-md"
             required
+          />
+        </div>
+
+        <div className="mb-4">
+          <label htmlFor="file" className="block text-sm font-medium text-gray-700">
+            Upload File
+          </label>
+          <input
+            type="file"
+            id="file"
+            onChange={handleFileChange}
+            className="mt-1 block w-full p-2 border border-gray-300 rounded-md"
           />
         </div>
 
