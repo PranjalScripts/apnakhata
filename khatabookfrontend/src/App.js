@@ -1,5 +1,4 @@
 import React from "react";
-import "./App.css";
 import { ToastContainer } from "react-toastify";
 import "react-toastify/dist/ReactToastify.css";
 import { BrowserRouter as Router, Routes, Route } from "react-router-dom";
@@ -24,6 +23,7 @@ import TransactionHistory from "./pages/selfRecord/history";
 import PageNotFound from "./pages/pageNotFound/PageNotFound"
 import DashBoard from "./pages/DashBoard/DashBoard"
 
+
 function App() {
   return (
     <Router>
@@ -37,10 +37,8 @@ function App() {
           <Route path="dashboard" element={<DashBoard />} />
           <Route path="your-books" element={<YourBooks />} />
           <Route path="/your-books/:bookId" element={<SelfRecordByBookID />} />
-          <Route
-            path="transaction-history/:transactionId"
-            element={<TransactionHistory />}
-          />
+          <Route path="transaction-history/:transactionId" element={<TransactionHistory />}
+      />
           <Route path="users" element={<Users />} />
           <Route path="book" element={<Book />} />
           <Route path="profile" element={<Profile />} />
@@ -55,13 +53,11 @@ function App() {
             element={<CollaborativeBookRecords />}
           />
         </Route>
-
         {/* Auth pages */}
         <Route path="/login" element={<Login />} />
         <Route path="/signup" element={<Signup />} />
         <Route path="*" element={<PageNotFound />} />
       </Routes>
-
       <ToastContainer position="top-right" autoClose={3000} hideProgressBar />
     </Router>
   );

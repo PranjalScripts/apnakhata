@@ -46,7 +46,7 @@ const TransactionHistory = React.memo(({
                 </td>
                 <td className="px-4 py-2">{history.amount.toFixed(2)}</td>
                 <td className="px-4 py-2">{history.description}</td>
-                <td className="border border-gray-300 px-4 py-2">
+                <td className="border border-gray-300 px-4 py-2 w-32 h-32"> {/* Fixed width and height */}
                   {typeof history.file === "string" &&
                   history.file.trim() !== "" ? (
                     <img
@@ -54,7 +54,7 @@ const TransactionHistory = React.memo(({
                         process.env.REACT_APP_URL
                       }/${history.file.replace(/\\/g, "/")}`}
                       alt="Transaction File"
-                      className="max-w-xs max-h-32 object-contain cursor-pointer"
+                      className="w-full h-full object-cover cursor-pointer" // Adjust object-fit for the image
                       onClick={() => handleImageClick(history.file)}
                     />
                   ) : (
