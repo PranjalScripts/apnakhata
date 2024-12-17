@@ -1,0 +1,9 @@
+config:
+  target: "https://chat.pizeonfly.com"
+  phases:
+    - duration: 1 # Test for 60 seconds
+      arrivalRate: 10000000 # 10000 requests per second
+scenarios:
+  - flow:
+      - get:
+          url: "/"
