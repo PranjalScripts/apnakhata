@@ -46,21 +46,34 @@ const TransactionHistory = React.memo(({
                 </td>
                 <td className="px-4 py-2">{history.amount.toFixed(2)}</td>
                 <td className="px-4 py-2">{history.description}</td>
-                <td className="border border-gray-300 px-4 py-2 w-32 h-32"> {/* Fixed width and height */}
-                  {typeof history.file === "string" &&
-                  history.file.trim() !== "" ? (
-                    <img
-                      src={`${
-                        process.env.REACT_APP_URL
-                      }/${history.file.replace(/\\/g, "/")}`}
-                      alt="Transaction File"
-                      className="w-full h-full object-cover cursor-pointer" // Adjust object-fit for the image
-                      onClick={() => handleImageClick(history.file)}
-                    />
-                  ) : (
-                    <span>No file provided</span>
-                  )}
-                </td>
+                <td className="border border-gray-300 px-4 py-2">
+  {typeof history.file === "string" && history.file.trim() !== "" ? (
+    // Check if the file is an image
+    history.file.match(/\.(jpeg|jpg|gif|png)$/i) ? (
+      <img
+        src={`${process.env.REACT_APP_URL}/${history.file.replace(/\\/g, "/")}`}
+        alt="Transaction File"
+        className="max-w-xs max-h-32 object-contain cursor-pointer"
+        onClick={() => handleImageClick(history.file)}
+      />
+    ) : // Check if the file is a PDF
+    history.file.match(/\.pdf$/i) ? (
+      <a
+        href={`${process.env.REACT_APP_URL}/${history.file.replace(/\\/g, "/")}`}
+        target="_blank"
+        rel="noopener noreferrer"
+        className="text-blue-500 hover:underline"
+      >
+        View PDF Attachment
+      </a>
+    ) : (
+      <span>Unsupported file type</span>
+    )
+  ) : (
+    <span>No file provided</span>
+  )}
+</td>
+
                 <td className="border border-gray-300 px-4 py-2">
                   {history.confirmationStatus === "confirmed" ? (
                     <span className="text-green-600 font-semibold">

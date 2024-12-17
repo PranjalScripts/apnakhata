@@ -14,8 +14,7 @@ import Invoice from "./pages/invoice/invoice";
 import CollaborativeBook from "./pages/collaborativeBook/youWereAdded/collaborativeBook";
 import Layout from "./pages/Layout/Layout";
 import CollaborativeBookRecords from "./pages/collaborativeBook/youWereAdded/CollaborativeBookRecords";
-import YouAdded from "./pages/collaborativeBook/youAdded/YouAdded";
-import History from "./pages/collaborativeBook/youAdded/history";
+ import History from "./pages/collaborativeBook/youAdded/history";
 import AddTransactions from "./pages/collaborativeBook/youAdded/AddTransactions";
 import YourBooks from "./pages/selfRecord/yourBooks";
 import SelfRecordByBookID from "./pages/selfRecord/selfrecordbyBookID";
@@ -44,8 +43,7 @@ function App() {
           <Route path="loans" element={<Loans />} />
           <Route path="invoice" element={<Invoice />} />
           <Route path="collaborativebook" element={<CollaborativeBook />} />
-          <Route path="youadded" element={<YouAdded />} />
-          <Route path="/history/:transactionId" element={<History />} />
+           <Route path="/history/:transactionId" element={<History />} />
           <Route path="/addtransaction" element={<AddTransactions />} />
           <Route
             path="/transaction-details/:transactionId"

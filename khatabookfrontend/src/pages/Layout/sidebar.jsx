@@ -62,8 +62,7 @@ const Sidebar = () => {
               <span>Self Records</span>
             </a>
           </li>
-
-          {/* Collabs with Dropdown */}
+ 
          
 
           <li className={`  ${isActive('/book') ? 'bg-blue-500 text-white' : 'hover:bg-blue-200'}`}>

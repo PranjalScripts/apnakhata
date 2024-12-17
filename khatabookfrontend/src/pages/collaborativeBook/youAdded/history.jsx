@@ -3,6 +3,8 @@ import { useParams } from "react-router-dom";
 import { MdEdit, MdDelete } from "react-icons/md";
 import { IoDownload } from 'react-icons/io5';   
 import { saveAs } from "file-saver";
+import ConfirmationModal from "./ConfirmationModal"; // Import the modal
+
 const History = () => {
   const { transactionId } = useParams(); // Get transaction ID from the route
   const [transaction, setTransaction] = useState(null);
@@ -13,12 +15,19 @@ const History = () => {
   const [isEditing, setIsEditing] = useState(false);
   const [isModalOpen, setIsModalOpen] = useState(false);
   const [modalImage, setModalImage] = useState(null);
-
+  const [isDeleteModalOpen, setIsDeleteModalOpen] = useState(false);
   const [editData, setEditData] = useState({
     id: null,
     amount: "",
     transactionType: "",
   });
+ // const [isModalOpen, setIsModalOpen] = useState(false);
+  const [selectedEntryId, setSelectedEntryId] = useState(null);
+
+  const handleDeleteClick = (entryId) => {
+    setSelectedEntryId(entryId);
+    setIsDeleteModalOpen(true);
+  };
   const [selectedTransactionType, setSelectedTransactionType] = useState(""); // To store the transaction type
   const [newTransaction, setNewTransaction] = useState({
     amount: "",
@@ -179,35 +188,36 @@ const History = () => {
   };
 
   //delete transaction
-  const handleDelete = async (entryId) => {
+  const handleDelete = async () => {
     const token = localStorage.getItem("token");
-    if (window.confirm("Are you sure you want to delete this transaction?")) {
-      try {
-        const response = await fetch(
-          `${process.env.REACT_APP_URL}/api/collab-transactions/transactions/${transactionId}/entries/${entryId}`,
-          {
-            method: "DELETE",
-            headers: { Authorization: `Bearer ${token}` },
-          }
-        );
-
-        if (response.ok) {
-          setTransaction((prev) => ({
-            ...prev,
-            transactionHistory: prev.transactionHistory.filter(
-              (entry) => entry._id !== entryId
-            ),
-          }));
-          alert("Transaction deleted successfully!");
-        } else {
-          console.error("Failed to delete transaction.");
-          alert("Failed to delete transaction. Please try again.");
+    try {
+      const response = await fetch(
+        `${process.env.REACT_APP_URL}/api/collab-transactions/transactions/${transactionId}/entries/${selectedEntryId}`,
+        {
+          method: "DELETE",
+          headers: { Authorization: `Bearer ${token}` },
         }
-      } catch (error) {
-        console.error("Error deleting transaction:", error);
+      );
+
+      if (response.ok) {
+        setTransaction((prev) => ({
+          ...prev,
+          transactionHistory: prev.transactionHistory.filter(
+            (entry) => entry._id !== selectedEntryId
+          ),
+        }));
+        // Optionally, show a success modal or notification here
+      } else {
+        console.error("Failed to delete transaction.");
+        // Optionally, show a failure modal or notification here
       }
+    } catch (error) {
+      console.error("Error deleting transaction:", error);
+    } finally {
+      setIsDeleteModalOpen(false);
     }
   };
+
   //edit transaction
   const openEditForm = (entry) => {
     setEditData({
@@ -448,20 +458,39 @@ const History = () => {
                     )}
                   </td>
                   <td className="border border-gray-300 px-4 py-2">
-                    {typeof history.file === "string" &&
-                    history.file.trim() !== "" ? (
-                      <img
-                        src={`${
-                          process.env.REACT_APP_URL
-                        }/${history.file.replace(/\\/g, "/")}`}
-                        alt="Transaction File"
-                        className="max-w-xs max-h-32 object-contain cursor-pointer"
-                        onClick={() => handleImageClick(history.file)}
-                      />
-                    ) : (
-                      <span>No file provided</span>
-                    )}
-                  </td>
+                   {typeof history.file === "string" &&
+                   history.file.trim() !== "" ? (
+                     // Check if the file is an image
+                     history.file.match(/\.(jpeg|jpg|gif|png)$/i) ? (
+                       <img
+                         src={`${process.env.REACT_APP_URL}/${history.file.replace(
+                           /\\/g,
+                           "/"
+                         )}`}
+                         alt="Transaction File"
+                         className="max-w-xs max-h-32 object-contain cursor-pointer"
+                         onClick={() => handleImageClick(history.file)}
+                       />
+                     ) : // Check if the file is a PDF
+                     history.file.match(/\.pdf$/i) ? (
+                       <a
+                         href={`${process.env.REACT_APP_URL}/${history.file.replace(
+                           /\\/g,
+                           "/"
+                         )}`}
+                         target="_blank"
+                         rel="noopener noreferrer"
+                         className="text-blue-500 hover:underline"
+                       >
+                         View PDF Attachment
+                       </a>
+                     ) : (
+                       <span>Unsupported file type</span>
+                     )
+                   ) : (
+                     <span>No file provided</span>
+                   )}
+                 </td>
                   <td className="border border-gray-300 px-4 py-2">
                     {userId === history.initiaterId ? (
                       <>
@@ -473,7 +502,7 @@ const History = () => {
                           <MdEdit className="text-xl" />
                         </button>
                         <button
-                          onClick={() => handleDelete(history._id)}
+                          onClick={() => handleDeleteClick(history._id)}
                           className="text-red-500 hover:text-red-600"
                           title="Delete"
                         >
@@ -614,8 +643,18 @@ const History = () => {
           </div>
         </div>
       )}
+   <ConfirmationModal
+  isOpen={isDeleteModalOpen}
+  onClose={() => setIsDeleteModalOpen(false)}
+  onConfirm={handleDelete}
+/>
     </div>
+    
   );
 };
+
+  
+    
+ 
 
 export default History;

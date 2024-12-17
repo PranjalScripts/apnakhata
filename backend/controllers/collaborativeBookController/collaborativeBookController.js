@@ -34,46 +34,8 @@ const getTransactions = async (req, res) => {
     res.status(500).json({ error: error.message });
   }
 };
+
 // Fetch transactions for a client
-// const getTransactionstoclient = async (req, res) => {
-//   try {
-//     // Assuming the client/user is logged in and their ID is available via the session or token
-//     const loggedInUserId = req.user.id; // The logged-in user's ID (could be a client ID when logged in)
-
-//     // Step 1: Get the client by email
-//     const client = await Client.findOne({ email: req.user.email });
-//     if (!client) {
-//       return res.status(404).json({ message: "Client not found" });
-//     }
-
-//     // Step 2: Find the user by email (User model) - to ensure that this client is treated as a user
-//     const user = await User.findOne({ email: req.user.email });
-//     if (!user) {
-//       return res.status(404).json({ message: "User not found" });
-//     }
-
-//     // Step 3: Query the Transaction model to get transactions for this user/client
-//     const transactions = await Transaction.find({
-//       // Match transaction where the user is involved
-//       clientUserId: client._id, // Match transaction where the client is involved
-//     })
-//       .populate({
-//         path: "userId",
-//         select: "-password", // Exclude the password field
-//       })
-//       .populate("clientUserId bookId") // Populate related user, client, and book details
-//       .lean(); // Returns plain JavaScript objects (without Mongoose's internal properties)
-
-//     if (transactions.length === 0) {
-//       return res.status(404).json({ message: "No transactions found." });
-//     }
-
-//     res.status(200).json({ transactions });
-//   } catch (error) {
-//     console.error(error);
-//     res.status(500).json({ error: error.message });
-//   }
-// };
 const getTransactionstoclient = async (req, res) => {
   try {
     // Step 1: Find all clients with the same email as the logged-in user
