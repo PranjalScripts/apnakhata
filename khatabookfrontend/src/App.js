@@ -20,15 +20,15 @@ import AddTransactions from "./pages/collaborativeBook/youAdded/AddTransactions"
 import YourBooks from "./pages/selfRecord/yourBooks";
 import SelfRecordByBookID from "./pages/selfRecord/selfrecordbyBookID";
 import TransactionHistory from "./pages/selfRecord/history";
-import PageNotFound from "./pages/pageNotFound/PageNotFound"
-import DashBoard from "./pages/Dashboard/dashboard"
+import PageNotFound from "./pages/pageNotFound/PageNotFound";
+import DashBoard from "./pages/DashBoard/DashBoard";
 
 
 function App() {
   return (
     <Router>
       <Routes>
-        {/* Landing page at the root path */}
+     
         <Route path="/" element={<Landing />} />
 
         {/* Dashboard and other pages using Layout */}
@@ -37,8 +37,7 @@ function App() {
           <Route path="dashboard" element={<DashBoard />} />
           <Route path="your-books" element={<YourBooks />} />
           <Route path="/your-books/:bookId" element={<SelfRecordByBookID />} />
-          <Route path="transaction-history/:transactionId" element={<TransactionHistory />}
-      />
+          <Route path="transaction-history/:transactionId" element={<TransactionHistory />}/>
           <Route path="users" element={<Users />} />
           <Route path="book" element={<Book />} />
           <Route path="profile" element={<Profile />} />
@@ -53,7 +52,6 @@ function App() {
             element={<CollaborativeBookRecords />}
           />
         </Route>
-        {/* Auth pages */}
         <Route path="/login" element={<Login />} />
         <Route path="/signup" element={<Signup />} />
         <Route path="*" element={<PageNotFound />} />

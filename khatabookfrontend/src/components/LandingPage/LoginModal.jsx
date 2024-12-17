@@ -4,17 +4,14 @@ import { toast } from "react-toastify";
 import axios from "axios";
 import { useAuth } from "../../context/AuthContext";
 import { useNavigate } from "react-router-dom";
+
 const LoginModal = ({ showLoginModal, setShowLoginModal }) => {
   const [identifier, setIdentifier] = useState("");
   const [password, setPassword] = useState("");
   const [showPassword, setShowPassword] = useState(false);
   const { login } = useAuth();
-const navigate = useNavigate();
- 
-const handleNavigate = () => {
-  navigate("/home");
-};
-  const modalRef = useRef(null); // Ref for modal content
+  const navigate = useNavigate();
+  const modalRef = useRef(null);
 
   const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
   const phoneRegex = /^[0-9]{10}$/;
@@ -37,11 +34,15 @@ const handleNavigate = () => {
         loginPayload
       );
       const { user, token } = response.data;
-      login(user);
-      localStorage.setItem("token", token);
-      localStorage.setItem("userId", user.id);
-      toast.success("Login successful");
-      setShowLoginModal(false);
+
+      if (user && token) {
+        login({ ...user, token }); // Call login from AuthContext
+        toast.success("Login successful");
+        setShowLoginModal(false);
+        navigate("/home"); // Redirect to home after login
+      } else {
+        toast.error("Invalid response. Please try again.");
+      }
     } catch (error) {
       toast.error(error.response?.data?.message || "Login failed");
     }
@@ -50,12 +51,7 @@ const handleNavigate = () => {
   // Close modal on clicking outside or pressing Escape key
   useEffect(() => {
     const handleOutsideOrEscape = (event) => {
-      // Close on Escape key
-      if (event.key === "Escape") {
-        setShowLoginModal(false);
-      }
-      // Close on outside click
-      if (event.type === "mousedown" && modalRef.current && !modalRef.current.contains(event.target)) {
+      if (event.key === "Escape" || (event.type === "mousedown" && modalRef.current && !modalRef.current.contains(event.target))) {
         setShowLoginModal(false);
       }
     };
@@ -79,7 +75,7 @@ const handleNavigate = () => {
       {/* Modal Container */}
       <div className="fixed inset-0 flex items-center justify-center z-50">
         <div
-          ref={modalRef} // Attach ref to modal content
+          ref={modalRef}
           className="bg-white rounded-lg shadow-lg p-6 max-w-sm w-full relative"
         >
           <button
@@ -128,7 +124,6 @@ const handleNavigate = () => {
             <button
               type="submit"
               className="w-full bg-blue-600 text-white py-2 rounded-md shadow-md hover:bg-blue-700 focus:ring-2 focus:ring-blue-500 focus:ring-offset-1"
-            onClick={handleNavigate}
             >
               Login
             </button>
