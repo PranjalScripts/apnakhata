@@ -24,7 +24,7 @@ const AddTransactionForm = ({
 
   return (
     <>
-      <div className="flex gap-4 mb-6">
+      <div className="relative z-10 flex gap-4 mb-6 mt-6">
         <button
           type="button"
           onClick={() => {
