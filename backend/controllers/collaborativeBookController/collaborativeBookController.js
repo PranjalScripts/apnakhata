@@ -168,7 +168,7 @@ const getTransactionstoclient = async (req, res) => {
        transaction = await existingTransaction.save();
 
        res.status(200).json({
-         message: "Transaction updated successfully.",
+         message: "Transaction  Added successfully.",
          transaction,
        });
      } else {
@@ -494,7 +494,7 @@ const updateTransaction = async (req, res) => {
     await transaction.save();
 
     res.status(200).json({
-      message: "Transaction updated successfully.",
+      message: "Transaction updatted successfully.",
       transaction,
     });
 
