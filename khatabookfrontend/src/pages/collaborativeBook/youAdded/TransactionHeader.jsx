@@ -19,7 +19,7 @@ const TransactionHeader = ({ transaction }) => {
         </div>
         <div className="bg-red-50 p-4 rounded-lg shadow-sm">
           <p className="text-lg font-medium text-red-600"><strong>Outstanding Balance:</strong></p>
-          <p className="text-gray-700">{transaction.outstandingBalance}</p>
+          <p className="text-gray-700">{Math.abs(transaction.outstandingBalance).toFixed(2)}</p>
         </div>
       </div>
     </div>
