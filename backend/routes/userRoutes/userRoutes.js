@@ -18,7 +18,7 @@ router.post("/signup", signup);
 router.post("/login", login);
 
 // Route for updating user profile (protected)
-router.put("/update-profile/:userId", authenticate, updateProfile);
+router.patch("/update-profile/:userId", authenticate, updateProfile);
 
  
 // Route for getting user profile (protected)
