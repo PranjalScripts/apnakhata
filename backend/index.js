@@ -32,7 +32,7 @@ app.use(
 );
 //api for authentications
 app.use("/api/v1/auth", userRoutes);
-//app.use("/uploads", express.static(path.join(__dirname, "uploads")));
+app.use("/uploads", express.static(path.join(__dirname, "uploads")));
 
 //api for books
 app.use("/api/v2/transactionBooks", bookRoutes);
