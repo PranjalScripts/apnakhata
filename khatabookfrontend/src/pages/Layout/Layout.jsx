@@ -18,10 +18,10 @@ const Layout = () => {
                 <div className='mb-16'>
                     <Header />
                 </div>
-                <div>
+                <div className='pb-16'>
                     <Outlet />
                 </div>
-                {/* <div><Footer/></div> */}
+                <div><Footer/></div>
             </div>
         </div>
     );
