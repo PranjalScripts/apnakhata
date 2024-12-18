@@ -79,6 +79,14 @@ const AddTransactions = () => {
     }
   };
 
+  const handleAmountChange = (e) => {
+    const value = e.target.value;
+    // Only allow numbers and decimal point
+    if (/^\d*\.?\d*$/.test(value) || value === '') {
+      setAmount(value);
+    }
+  };
+
   const Goback = () => {
     navigate(-1);
   };
@@ -182,14 +190,19 @@ const AddTransactions = () => {
                   </label>
                   <div className="mt-1 relative rounded-md shadow-sm">
                     <div className="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none">
-                      <span className="text-gray-500 sm:text-sm">₹</span>
+                      <span className="text-gray-500 text-lg">₹</span>
                     </div>
                     <input
                       type="number"
                       id="amount"
                       value={amount}
-                      onChange={(e) => setAmount(e.target.value)}
-                      className="focus:ring-indigo-500 focus:border-indigo-500 block w-full pl-7 pr-12 sm:text-sm border-gray-300 rounded-md"
+                      onChange={handleAmountChange}
+                      onKeyDown={(e) => {
+                        if (e.key === 'e' || e.key === 'E' || e.key === '+' || e.key === '-') {
+                          e.preventDefault();
+                        }
+                      }}
+                      className="focus:ring-indigo-500 focus:border-indigo-500 block w-full pl-8 pr-12 py-3 text-lg border-gray-300 rounded-md [appearance:textfield] [&::-webkit-outer-spin-button]:appearance-none [&::-webkit-inner-spin-button]:appearance-none"
                       placeholder="0.00"
                       required
                     />
@@ -197,10 +210,12 @@ const AddTransactions = () => {
                 </div>
               </div>
 
-              <div>
-                <label htmlFor="description" className="block text-sm font-medium text-gray-700">
-                  Description
-                </label>
+              <div className="space-y-2">
+                <div className="flex items-center justify-between">
+                  <label htmlFor="description" className="block text-sm font-medium text-gray-700">
+                    Description <span className="text-gray-400 text-xs">(optional)</span>
+                  </label>
+                </div>
                 <div className="mt-1">
                   <textarea
                     id="description"
@@ -208,16 +223,19 @@ const AddTransactions = () => {
                     onChange={(e) => setDescription(e.target.value)}
                     rows={3}
                     className="shadow-sm focus:ring-indigo-500 focus:border-indigo-500 mt-1 block w-full sm:text-sm border border-gray-300 rounded-md"
-                    placeholder="Enter transaction details..."
-                    required
+                    placeholder="Enter additional details about the transaction..."
                   />
                 </div>
               </div>
 
-              <div>
-                <label className="block text-sm font-medium text-gray-700">Upload File</label>
-                <div className="mt-1 flex justify-center px-6 pt-5 pb-6 border-2 border-gray-300 border-dashed rounded-md hover:border-indigo-500 transition-colors duration-200">
-                  <div className="space-y-1 text-center">
+              <div className="space-y-2">
+                <div className="flex items-center justify-between">
+                  <label className="block text-sm font-medium text-gray-700">
+                    Upload File <span className="text-gray-400 text-xs">(optional)</span>
+                  </label>
+                </div>
+                <div className="mt-1 flex justify-center px-6 pt-5 pb-6 border-2 border-gray-300 border-dashed rounded-md hover:border-indigo-500 transition-colors duration-200 bg-gray-50">
+                  <div className="space-y-2 text-center">
                     <svg
                       className="mx-auto h-12 w-12 text-gray-400"
                       stroke="currentColor"
@@ -232,12 +250,12 @@ const AddTransactions = () => {
                         strokeLinejoin="round"
                       />
                     </svg>
-                    <div className="flex text-sm text-gray-600">
+                    <div className="flex flex-col items-center text-sm text-gray-600">
                       <label
                         htmlFor="file"
-                        className="relative cursor-pointer bg-white rounded-md font-medium text-indigo-600 hover:text-indigo-500 focus-within:outline-none focus-within:ring-2 focus-within:ring-offset-2 focus-within:ring-indigo-500"
+                        className="relative cursor-pointer rounded-md font-medium text-indigo-600 hover:text-indigo-500 focus-within:outline-none focus-within:ring-2 focus-within:ring-offset-2 focus-within:ring-indigo-500"
                       >
-                        &nbsp;    &nbsp;   &nbsp;   &nbsp;   &nbsp;<span>Upload a file</span>
+                        <span>Click to upload a file</span>
                         <input
                           id="file"
                           type="file"
@@ -245,8 +263,13 @@ const AddTransactions = () => {
                           onChange={handleFileChange}
                         />
                       </label>
+                      <p className="text-xs text-gray-500 mt-2">PNG, JPG, PDF up to 5MB</p>
+                      {file && (
+                        <p className="text-sm text-indigo-600 mt-2">
+                          Selected: {file.name}
+                        </p>
+                      )}
                     </div>
-                    <p className="text-xs text-gray-500">PNG, JPG, PDF up to 5MB</p>
                   </div>
                 </div>
               </div>
