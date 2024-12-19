@@ -15,7 +15,7 @@ const Footer = () => {
 
   return (
     <footer className="fixed bottom-0 left-[20%] w-[80%] bg-white/70 backdrop-blur-[2px]
-    p-3 md:p-4 border-t border-gray-200">
+    p-3 md:p-4 border-t border-gray-200 z-[10]">
       <div className="flex items-center justify-center space-x-8 md:space-x-12">
         {/* Transaction Direction Legend */}
         <div className="flex items-center space-x-6 text-sm text-gray-600">

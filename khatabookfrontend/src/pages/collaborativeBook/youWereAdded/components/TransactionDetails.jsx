@@ -11,12 +11,8 @@ const TransactionDetails = ({ transaction, userId }) => {
           </tr>
         </thead>
         <tbody>
-          <tr>
-            <td className="px-4 py-2 font-medium text-gray-700">
-              Transaction ID
-            </td>
-            <td className="px-4 py-2">{transaction._id}</td>
-          </tr>
+           
+            
           <tr className="border-t border-gray-200">
             <td className="px-4 py-2 font-medium text-gray-700">Book Name</td>
             <td className="px-4 py-2">{transaction.bookId.bookname}</td>

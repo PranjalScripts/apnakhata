@@ -1,7 +1,7 @@
 import React from "react";
 import { motion, LazyMotion, domAnimation } from "framer-motion";
 
-const SuccessModal = ({ isOpen, message, onClose }) => {
+const ErrorModal = ({ isOpen, message, onClose }) => {
   if (!isOpen) return null;
 
   return (
@@ -23,7 +23,7 @@ const SuccessModal = ({ isOpen, message, onClose }) => {
               initial={{ scale: 0 }}
               animate={{ scale: 1.2, rotate: 360 }}
               transition={{ duration: 0.5 }}
-              className="w-16 h-16 rounded-full bg-gradient-to-r from-green-400 to-blue-500 flex items-center justify-center"
+              className="w-16 h-16 rounded-full bg-gradient-to-r from-red-400 to-pink-500 flex items-center justify-center"
             >
               <motion.svg
                 initial={{ pathLength: 0 }}
@@ -38,15 +38,15 @@ const SuccessModal = ({ isOpen, message, onClose }) => {
                   strokeLinecap="round"
                   strokeLinejoin="round"
                   strokeWidth={2}
-                  d="M5 13l4 4L19 7"
+                  d="M6 18L18 6M6 6l12 12"
                 />
               </motion.svg>
             </motion.div>
           </div>
-          <p className="mb-4 text-lg font-semibold">{message}</p>
+          <p className="mb-4 text-lg font-semibold text-red-600">{message}</p>
           <button
             onClick={onClose}
-            className="bg-blue-500 text-white px-4 py-2 rounded-md hover:bg-blue-600"
+            className="bg-red-500 text-white px-4 py-2 rounded-md hover:bg-red-600 transition-colors duration-200"
           >
             Close
           </button>
@@ -56,4 +56,4 @@ const SuccessModal = ({ isOpen, message, onClose }) => {
   );
 };
 
-export default SuccessModal;
+export default ErrorModal;

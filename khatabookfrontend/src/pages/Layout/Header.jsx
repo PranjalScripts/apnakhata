@@ -2,7 +2,7 @@ import { FaSearch, FaCog, FaBell } from "react-icons/fa";
 
 export default function Header() {
   return (
-    <div className="fixed top-0 left-[20%] flex items-center justify-between bg-white border-b border-gray-100 px-8 py-4 w-[80%] z-[5]">
+    <div className="fixed top-0 left-[20%] flex items-center justify-between bg-white border-b border-gray-100 px-8 py-4 w-[80%] z-[10]">
       {/* Title */}
       <h1 className="text-xl font-bold bg-gradient-to-r from-indigo-600 to-blue-500 bg-clip-text text-transparent">
         Overview

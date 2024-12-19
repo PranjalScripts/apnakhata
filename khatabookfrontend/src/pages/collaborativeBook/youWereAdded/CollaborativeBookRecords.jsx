@@ -208,86 +208,82 @@ const CollaborativeBookRecords = () => {
     setEditData({ id: "", amount: "", transactionType: "" });
   };
 
-const handleEditSubmit = async (e) => {
-  e.preventDefault();
+  const handleEditSubmit = async (e) => {
+    e.preventDefault();
 
-  const { id, amount, transactionType, description, file } = editData;
-  const token = localStorage.getItem("token");
+    const { id, amount, transactionType, description, file } = editData;
+    const token = localStorage.getItem("token");
 
-  // Prepare the form data
-  const formData = new FormData();
-  formData.append("amount", parseFloat(amount));
-  formData.append("transactionType", transactionType.toLowerCase());
-  if (description) formData.append("description", description);
-  if (file) formData.append("file", file);
+    // Prepare the form data
+    const formData = new FormData();
+    formData.append("amount", parseFloat(amount));
+    formData.append("transactionType", transactionType.toLowerCase());
+    if (description) formData.append("description", description);
+    if (file) formData.append("file", file);
 
-  try {
-    // Make the API call
-    const response = await fetch(
-      `${process.env.REACT_APP_URL}/api/collab-transactions/transactions/${transactionId}/entries/${id}`,
-      {
-        method: "PATCH",
-        headers: {
-          Authorization: `Bearer ${token}`,
-        },
-        body: formData,
-      }
-    );
-
-    // Parse the response
-    const updatedEntry = await response.json();
- 
-    // Check for success
-    if (response.ok) {
-     
-
-      // Update the state with the updated transaction entry
-      setTransaction((prev) => {
-        const updatedHistory = prev.transactionHistory.map((history) =>
-          history._id === id ? { ...editData, _id: id } : history
-        );
-
-        // Recalculate totals
-        const { totalCredit, totalDebit } = updatedHistory.reduce(
-          (acc, entry) => {
-            if (entry.transactionType === "credit") {
-              acc.totalCredit += parseFloat(entry.amount);
-            } else {
-              acc.totalDebit += parseFloat(entry.amount);
-            }
-            return acc;
+    try {
+      // Make the API call
+      const response = await fetch(
+        `${process.env.REACT_APP_URL}/api/collab-transactions/transactions/${transactionId}/entries/${id}`,
+        {
+          method: "PATCH",
+          headers: {
+            Authorization: `Bearer ${token}`,
           },
-          { totalCredit: 0, totalDebit: 0 }
-        );
+          body: formData,
+        }
+      );
 
-        return {
-          ...prev,
-          transactionHistory: updatedHistory,
-          totalCredit,
-          totalDebit,
-          balance: totalCredit - totalDebit,
-        };
-      });
+      // Parse the response
+      const updatedEntry = await response.json();
 
-      // Trigger updates and UI feedback
-      setUpdateTrigger((prev) => prev + 1);
-      closeEditForm();
-      setShowSuccessModal(true);
-    } else {
-      console.error("Unexpected failure:", {
-        responseOk: response.ok,
-        updatedEntry,
-      });
-      alert("Failed to update the transaction. Please try again.");
+      // Check for success
+      if (response.ok) {
+        // Update the state with the updated transaction entry
+        setTransaction((prev) => {
+          const updatedHistory = prev.transactionHistory.map((history) =>
+            history._id === id ? { ...editData, _id: id } : history
+          );
+
+          // Recalculate totals
+          const { totalCredit, totalDebit } = updatedHistory.reduce(
+            (acc, entry) => {
+              if (entry.transactionType === "credit") {
+                acc.totalCredit += parseFloat(entry.amount);
+              } else {
+                acc.totalDebit += parseFloat(entry.amount);
+              }
+              return acc;
+            },
+            { totalCredit: 0, totalDebit: 0 }
+          );
+
+          return {
+            ...prev,
+            transactionHistory: updatedHistory,
+            totalCredit,
+            totalDebit,
+            balance: totalCredit - totalDebit,
+          };
+        });
+
+        // Trigger updates and UI feedback
+        setUpdateTrigger((prev) => prev + 1);
+        closeEditForm();
+        setShowSuccessModal(true);
+      } else {
+        console.error("Unexpected failure:", {
+          responseOk: response.ok,
+          updatedEntry,
+        });
+        alert("Failed to update the transaction. Please try again.");
+      }
+    } catch (error) {
+      // Handle network or other errors
+      console.error("Error updating transaction:", error);
+      alert("An error occurred while updating the transaction.");
     }
-  } catch (error) {
-    // Handle network or other errors
-    console.error("Error updating transaction:", error);
-    alert("An error occurred while updating the transaction.");
-  }
-};
-
-
+  };
 
   const closeModal = () => {
     setIsModalOpen(false);
@@ -317,44 +313,96 @@ const handleEditSubmit = async (e) => {
   };
 
   if (!transaction) {
-    return <div className="text-center py-10">Loading transaction details...</div>;
+    return (
+      <div className="text-center py-10">Loading transaction details...</div>
+    );
   }
 
   return (
-    <div className="container  p-3 max-w-3xl">
-      <h1 className="text-3xl font-semibold text-gray-800 mb-6">
-        Transaction Details
-      </h1>
+    <div className="h-screen bg-gray-50 overflow-hidden flex flex-col">
+      <div className="px-4 sm:px-6 lg:px-8 py-4 flex-none">
+        {/* Header Section */}
+        <div className="mb-4">
+          <h1 className="text-2xl font-bold bg-gradient-to-r from-blue-600 to-purple-600 bg-clip-text text-transparent">
+            Transaction Details
+          </h1>
+          <p className="mt-1 text-sm text-gray-600">
+            Manage and track your transactions with {transaction?.collaborator?.name}
+          </p>
+        </div>
 
-      <TransactionDetails transaction={transaction} userId={userId} />
+        {/* Transaction Details Grid */}
+        <div className="grid grid-cols-1 md:grid-cols-3 gap-1 mb-4">
+          {/* Book Name Card */}
+          <div className="bg-gradient-to-br from-purple-500 to-purple-600 rounded-lg shadow p-4 text-white transform transition-all duration-300 hover:scale-102">
+            <h3 className="text-sm font-medium opacity-80 mb-1">Book Name</h3>
+            <p className="text-base font-semibold">{transaction.bookId?.bookname}</p>
+          </div>
 
-      <div className="flex space-x-4 mb-6">
-        <button
-          className="bg-red-500 text-white px-4 py-2 rounded hover:bg-red-600"
-          onClick={() => {
-            setShowForm(true);
-            setFormData((prev) => ({
-              ...prev,
-              transactionType: "you will get",
-            }));
-          }}
-        >
-          You Will Give
-        </button>
-        <button
-          className="bg-green-500 text-white px-4 py-2 rounded hover:bg-green-600"
-          onClick={() => {
-            setShowForm(true);
-            setFormData((prev) => ({
-              ...prev,
-              transactionType: "you will give",
-            }));
-          }}
-        >
-          You Will get
-        </button>
+          {/* Outstanding Balance Card */}
+          <div className="bg-gradient-to-br from-emerald-500 to-emerald-600 rounded-lg shadow p-4 text-white transform transition-all duration-300 hover:scale-102">
+            <h3 className="text-sm font-medium opacity-80 mb-1">Outstanding Balance</h3>
+            <p className="text-xl font-bold">
+              ₹{Math.abs(transaction.outstandingBalance || 0).toLocaleString('en-IN')}
+            </p>
+            <p className="text-xs opacity-80 mt-1">
+              {userId === transaction.initiaterId
+                ? transaction.outstandingBalance > 0
+                  ? "You will receive"
+                  : "You will pay"
+                : transaction.outstandingBalance > 0
+                ? "You will pay"
+                : "You will receive"}
+            </p>
+          </div>
+
+          {/* User Details Card */}
+          <div className="bg-gradient-to-br from-pink-500 to-pink-600 rounded-lg shadow p-4 text-white transform transition-all duration-300 hover:scale-102">
+            <h3 className="text-sm font-medium opacity-80 mb-1">User Details</h3>
+            <div className="space-y-1">
+              <div>
+                <p className="text-xs opacity-80">Your Name</p>
+                <p className="text-base font-semibold">{transaction.userId?.name}</p>
+              </div>
+              <div>
+                <p className="text-xs opacity-80">Other User</p>
+                <p className="text-base font-semibold">{transaction.clientUserId?.name}</p>
+              </div>
+            </div>
+          </div>
+        </div>
+
+        {/* Action Buttons */}
+        <div className="flex flex-wrap gap-2 mb-4">
+          <button
+            onClick={() => setShowForm(true)}
+            className="inline-flex items-center px-3 py-1.5 bg-gradient-to-r from-blue-600 to-blue-700 text-white text-sm font-medium rounded-md 
+            hover:from-blue-700 hover:to-blue-800 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-blue-500 
+            transition-all duration-200 shadow hover:shadow-md"
+          >
+            Add Transaction
+          </button>
+        </div>
       </div>
 
+      {/* Transaction History Section - Scrollable */}
+      <div className="flex-1 overflow-hidden px-4 sm:px-6 lg:px-8">
+        <div className="h-full overflow-auto">
+          <div className="bg-white rounded-lg shadow-sm border border-gray-100">
+            <TransactionHistory
+              transaction={transaction}
+              userId={userId}
+              handleImageClick={handleImageClick}
+              updateTransactionStatus={updateTransactionStatus}
+              updatingEntryId={updatingEntryId}
+              openEditForm={openEditForm}
+              handleDelete={handleDelete}
+            />
+          </div>
+        </div>
+      </div>
+
+      {/* Forms and Modals */}
       {showForm && (
         <TransactionForm
           formData={formData}
@@ -364,20 +412,6 @@ const handleEditSubmit = async (e) => {
           setShowForm={setShowForm}
         />
       )}
-
-      <h2 className="text-2xl bg-white shadow-lg rounded-lg p-6 font-semibold text-gray-800 mb-4">
-        Transaction History
-      </h2>
-
-      <TransactionHistory
-        transaction={transaction}
-        userId={userId}
-        handleImageClick={handleImageClick}
-        updateTransactionStatus={updateTransactionStatus}
-        updatingEntryId={updatingEntryId}
-        openEditForm={openEditForm}
-        handleDelete={handleDelete}
-      />
 
       {isEditing && (
         <EditForm

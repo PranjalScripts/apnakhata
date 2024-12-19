@@ -1,9 +1,9 @@
-
 import React, { useEffect, useState } from "react";
 import axios from "axios";
 import { FaTh, FaList } from "react-icons/fa";
-import { ToastContainer, toast } from "react-toastify";
-import "react-toastify/dist/ReactToastify.css";
+import SuccessModal from "../collaborativeBook/youAdded/SuccessModal";
+import ErrorModal from "../../components/ErrorModal";
+import DeleteConfirmationModal from "../../components/DeleteConfirmationModal";
 
 const BookPage = () => {
   const [books, setBooks] = useState([]);
@@ -14,6 +14,9 @@ const BookPage = () => {
   const [pageSize, setPageSize] = useState(viewMode === "list" ? 5 : 9);
   const [searchTerm, setSearchTerm] = useState("");
   const [showModal, setShowModal] = useState(false);
+  const [successModal, setSuccessModal] = useState({ isOpen: false, message: '' });
+  const [errorModal, setErrorModal] = useState({ isOpen: false, message: '' });
+  const [deleteModal, setDeleteModal] = useState({ isOpen: false, bookId: null, bookName: '' });
 
   useEffect(() => {
     fetchBooks();
@@ -34,7 +37,10 @@ const BookPage = () => {
       );
       setBooks(response.data.books);
     } catch (error) {
-      toast.error("Failed to get books.");
+      setErrorModal({
+        isOpen: true,
+        message: 'Failed to fetch books. Please try again.'
+      });
       console.error("Error fetching books", error);
     }
   };
@@ -56,7 +62,10 @@ const BookPage = () => {
             book._id === editingBook._id ? response.data.book : book
           )
         );
-        toast.success("Book updated successfully!");
+        setSuccessModal({
+          isOpen: true,
+          message: 'Book updated successfully!'
+        });
       } else {
         const response = await axios.post(
           `${process.env.REACT_APP_URL}/api/v2/transactionBooks/create-books`,
@@ -68,7 +77,10 @@ const BookPage = () => {
           }
         );
         setBooks([...books, response.data.book]);
-        toast.success("Book added successfully!");
+        setSuccessModal({
+          isOpen: true,
+          message: 'Book added successfully!'
+        });
       }
 
       setShowModal(false);
@@ -76,7 +88,12 @@ const BookPage = () => {
       setBookName("");
     } catch (error) {
       console.error("Error saving book", error);
-      toast.error(editingBook ? "Failed to update book." : "Failed to add book.");
+      setErrorModal({
+        isOpen: true,
+        message: editingBook ? 
+          'Failed to update book. Please try again.' : 
+          'Failed to add book. Please try again.'
+      });
     }
   };
 
@@ -91,15 +108,26 @@ const BookPage = () => {
         }
       );
       setBooks(books.filter((book) => book._id !== bookId));
-      toast.success("Book deleted successfully!");
+      setSuccessModal({
+        isOpen: true,
+        message: 'Book deleted successfully!'
+      });
+      setDeleteModal({ isOpen: false, bookId: null, bookName: '' });
     } catch (error) {
       console.error("Error deleting book", error);
-      toast.error("Failed to delete book.");
+      setErrorModal({
+        isOpen: true,
+        message: 'Failed to delete book. Please try again.'
+      });
     }
   };
 
   const handlePageChange = (page) => {
     setCurrentPage(page);
+  };
+
+  const confirmDelete = (bookId, bookName) => {
+    setDeleteModal({ isOpen: true, bookId, bookName });
   };
 
   const filteredBooks = books.filter((book) =>
@@ -114,89 +142,113 @@ const BookPage = () => {
   const totalPages = Math.ceil(filteredBooks.length / pageSize);
 
   return (
-    <div className="p-6 bg-gray-100 min-h-screen">
-      <div className="container mx-auto">
-        <h2 className="text-2xl font-bold text-left mb-6">Manage Books</h2>
-
-        {/* Add/Edit Button */}
-        <div className="flex justify-left mb-6">
+    <div className="min-h-screen bg-gradient-to-br from-gray-50 to-gray-100 py-8 px-4 sm:px-6 lg:px-8">
+      <div className="max-w-7xl mx-auto">
+        <div className="flex justify-between items-center mb-8">
+          <h2 className="text-3xl font-bold text-gray-900 tracking-tight">Manage Books</h2>
           <button
             onClick={() => {
               setShowModal(true);
               setEditingBook(null);
               setBookName("");
             }}
-            className="bg-indigo-500 text-white px-4 py-2 rounded hover:bg-indigo-600"
+            className="inline-flex items-center px-4 py-2 bg-indigo-600 hover:bg-indigo-700 text-white text-sm font-medium rounded-md shadow-sm transition-colors duration-200 ease-in-out focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-indigo-500"
           >
+            <svg className="h-5 w-5 mr-2" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 4v16m8-8H4" />
+            </svg>
             Add Book
           </button>
         </div>
 
-        {/* Search Bar */}
-        <div className="flex justify-center mb-6">
-          <input
-            type="text"
-            placeholder="Search by book name"
-            className="w-full max-w-lg px-4 py-2 border rounded focus:outline-none focus:ring-2 focus:ring-indigo-500"
-            value={searchTerm}
-            onChange={(e) => setSearchTerm(e.target.value)}
-          />
-        </div>
-
-        {/* View Mode Switch */}
-        <div className="flex justify-center items-center space-x-4 mb-6">
-          <FaTh
-            className={`text-2xl cursor-pointer ${
-              viewMode === "grid" ? "text-indigo-500" : "text-gray-500"
-            }`}
-            onClick={() => {
-              setViewMode("grid");
-              setPageSize(9);
-              setCurrentPage(1);
-            }}
-          />
-          <FaList
-            className={`text-2xl cursor-pointer ${
-              viewMode === "list" ? "text-indigo-500" : "text-gray-500"
-            }`}
-            onClick={() => {
-              setViewMode("list");
-              setPageSize(5);
-              setCurrentPage(1);
-            }}
-          />
+        {/* Search and View Mode */}
+        <div className="flex flex-col sm:flex-row justify-between items-center gap-4 mb-6">
+          <div className="relative w-full sm:w-96">
+            <input
+              type="text"
+              placeholder="Search books..."
+              className="w-full pl-10 pr-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-indigo-500 focus:border-indigo-500 transition-colors duration-200"
+              value={searchTerm}
+              onChange={(e) => setSearchTerm(e.target.value)}
+            />
+            <div className="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none">
+              <svg className="h-5 w-5 text-gray-400" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z" />
+              </svg>
+            </div>
+          </div>
+          <div className="flex items-center space-x-4 bg-white rounded-lg p-2 shadow-sm">
+            <button
+              onClick={() => {
+                setViewMode("grid");
+                setPageSize(9);
+                setCurrentPage(1);
+              }}
+              className={`p-2 rounded-md transition-colors duration-200 ${
+                viewMode === "grid"
+                  ? "bg-indigo-100 text-indigo-600"
+                  : "text-gray-500 hover:bg-gray-100"
+              }`}
+            >
+              <FaTh className="text-xl" />
+            </button>
+            <button
+              onClick={() => {
+                setViewMode("list");
+                setPageSize(5);
+                setCurrentPage(1);
+              }}
+              className={`p-2 rounded-md transition-colors duration-200 ${
+                viewMode === "list"
+                  ? "bg-indigo-100 text-indigo-600"
+                  : "text-gray-500 hover:bg-gray-100"
+              }`}
+            >
+              <FaList className="text-xl" />
+            </button>
+          </div>
         </div>
 
         {/* Books Display */}
         {viewMode === "list" ? (
-          <div className="overflow-x-auto">
-            <table className="table-auto w-full bg-white shadow-md rounded mb-6">
-              <thead>
-                <tr className="bg-gray-200 text-left">
-                  <th className="px-4 py-2">#</th>
-                  <th className="px-4 py-2">Book Name</th>
-                  <th className="px-4 py-2">Actions</th>
+          <div className="bg-white rounded-lg shadow overflow-hidden">
+            <table className="min-w-full divide-y divide-gray-200">
+              <thead className="bg-gray-50">
+                <tr>
+                  <th scope="col" className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                    #
+                  </th>
+                  <th scope="col" className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                    Book Name
+                  </th>
+                  <th scope="col" className="px-6 py-3 text-right text-xs font-medium text-gray-500 uppercase tracking-wider">
+                    Actions
+                  </th>
                 </tr>
               </thead>
-              <tbody>
+              <tbody className="bg-white divide-y divide-gray-200">
                 {paginatedBooks.map((book, index) => (
-                  <tr key={book._id} className="border-b">
-                    <td className="px-4 py-2">{index + 1}</td>
-                    <td className="px-4 py-2">{book.bookname}</td>
-                    <td className="px-4 py-2 flex space-x-2">
+                  <tr key={book._id} className="hover:bg-gray-50 transition-colors duration-200">
+                    <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-500">
+                      {index + 1}
+                    </td>
+                    <td className="px-6 py-4 whitespace-nowrap text-sm font-medium text-gray-900">
+                      {book.bookname}
+                    </td>
+                    <td className="px-6 py-4 whitespace-nowrap text-right text-sm font-medium">
                       <button
                         onClick={() => {
                           setEditingBook(book);
                           setBookName(book.bookname);
                           setShowModal(true);
                         }}
-                        className="bg-yellow-500 text-white px-3 py-1 rounded hover:bg-yellow-600"
+                        className="text-indigo-600 hover:text-indigo-900 mr-4 transition-colors duration-200"
                       >
                         Edit
                       </button>
                       <button
-                        onClick={() => handleDeleteBook(book._id)}
-                        className="bg-red-500 text-white px-3 py-1 rounded hover:bg-red-600"
+                        onClick={() => confirmDelete(book._id, book.bookname)}
+                        className="text-red-600 hover:text-red-900 transition-colors duration-200"
                       >
                         Delete
                       </button>
@@ -207,95 +259,187 @@ const BookPage = () => {
             </table>
           </div>
         ) : (
-          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+          <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-6">
             {paginatedBooks.map((book, index) => (
               <div
                 key={book._id}
-                className="bg-white p-4 shadow-md rounded flex flex-col justify-between"
+                className={`bg-gradient-to-br ${
+                  index % 3 === 0 ? 'from-blue-200 via-blue-100 to-white' : 
+                  index % 3 === 1 ? 'from-purple-200 via-purple-100 to-white' : 
+                  'from-emerald-200 via-emerald-100 to-white'
+                } rounded-lg shadow-sm hover:shadow-lg transition-all duration-200 overflow-hidden group border border-gray-100`}
               >
-                <h5 className="text-lg font-semibold">{book.bookname}</h5>
-                <div className="mt-4 flex space-x-2">
-                  <button
-                    onClick={() => {
-                      setEditingBook(book);
-                      setBookName(book.bookname);
-                      setShowModal(true);
-                    }}
-                    className="bg-yellow-500 text-white px-3 py-1 rounded hover:bg-yellow-600"
-                  >
-                    Edit
-                  </button>
-                  <button
-                    onClick={() => handleDeleteBook(book._id)}
-                    className="bg-red-500 text-white px-3 py-1 rounded hover:bg-red-600"
-                  >
-                    Delete
-                  </button>
+                <div className="p-6">
+                  <div className="flex items-center mb-4">
+                    <div className={`w-8 h-8 rounded-full flex items-center justify-center mr-3 ${
+                      index % 3 === 0 ? 'bg-blue-500 text-white' : 
+                      index % 3 === 1 ? 'bg-purple-500 text-white' : 
+                      'bg-emerald-500 text-white'
+                    }`}>
+                      {book.bookname.charAt(0).toUpperCase()}
+                    </div>
+                    <h3 className="text-lg font-semibold text-gray-900 group-hover:text-indigo-600 transition-colors duration-200">
+                      {book.bookname}
+                    </h3>
+                  </div>
+                  <div className="flex justify-end space-x-3">
+                    <button
+                      onClick={() => {
+                        setEditingBook(book);
+                        setBookName(book.bookname);
+                        setShowModal(true);
+                      }}
+                      className={`inline-flex items-center px-4 py-2 ${
+                        index % 3 === 0 ? 'border-blue-500 text-blue-500 hover:bg-blue-500' : 
+                        index % 3 === 1 ? 'border-purple-500 text-purple-500 hover:bg-purple-500' : 
+                        'border-emerald-500 text-emerald-500 hover:bg-emerald-500'
+                      } border hover:text-white rounded-md text-sm font-medium transition-all duration-200`}
+                    >
+                      <svg xmlns="http://www.w3.org/2000/svg" className="h-4 w-4 mr-1.5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M11 5H6a2 2 0 00-2 2v11a2 2 0 002 2h11a2 2 0 002-2v-5m-1.414-9.414a2 2 0 112.828 2.828L11.828 15H9v-2.828l8.586-8.586z" />
+                      </svg>
+                      Edit
+                    </button>
+                    <button
+                      onClick={() => confirmDelete(book._id, book.bookname)}
+                      className="inline-flex items-center px-4 py-2 border border-red-500 text-red-500 hover:bg-red-500 hover:text-white rounded-md text-sm font-medium transition-all duration-200"
+                    >
+                      <svg xmlns="http://www.w3.org/2000/svg" className="h-4 w-4 mr-1.5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16" />
+                      </svg>
+                      Delete
+                    </button>
+                  </div>
                 </div>
               </div>
             ))}
           </div>
         )}
 
-        {/* Pagination Controls */}
-        <div className="flex justify-between items-center mt-6">
-          <button
-            onClick={() => handlePageChange(currentPage - 1)}
-            disabled={currentPage === 1}
-            className="px-4 py-2 bg-gray-300 rounded hover:bg-gray-400 disabled:bg-gray-200"
-          >
-            Previous
-          </button>
-          <span className="text-gray-600">
-            Page {currentPage} of {totalPages}
-          </span>
-          <button
-            onClick={() => handlePageChange(currentPage + 1)}
-            disabled={currentPage === totalPages}
-            className="px-4 py-2 bg-gray-300 rounded hover:bg-gray-400 disabled:bg-gray-200"
-          >
-            Next
-          </button>
+        {/* Pagination */}
+        <div className="flex items-center justify-between bg-white px-4 py-3 mt-6 rounded-lg shadow-sm">
+          <div className="flex-1 flex justify-between sm:hidden">
+            <button
+              onClick={() => handlePageChange(currentPage - 1)}
+              disabled={currentPage === 1}
+              className="relative inline-flex items-center px-4 py-2 border border-gray-300 text-sm font-medium rounded-md text-gray-700 bg-white hover:bg-gray-50 disabled:bg-gray-100 disabled:text-gray-500"
+            >
+              Previous
+            </button>
+            <button
+              onClick={() => handlePageChange(currentPage + 1)}
+              disabled={currentPage === totalPages}
+              className="ml-3 relative inline-flex items-center px-4 py-2 border border-gray-300 text-sm font-medium rounded-md text-gray-700 bg-white hover:bg-gray-50 disabled:bg-gray-100 disabled:text-gray-500"
+            >
+              Next
+            </button>
+          </div>
+          <div className="hidden sm:flex-1 sm:flex sm:items-center sm:justify-between">
+            <div>
+              <p className="text-sm text-gray-700">
+                Showing page <span className="font-medium">{currentPage}</span> of{" "}
+                <span className="font-medium">{totalPages}</span>
+              </p>
+            </div>
+            <div>
+              <nav className="relative z-0 inline-flex rounded-md shadow-sm -space-x-px" aria-label="Pagination">
+                <button
+                  onClick={() => handlePageChange(currentPage - 1)}
+                  disabled={currentPage === 1}
+                  className="relative inline-flex items-center px-2 py-2 rounded-l-md border border-gray-300 bg-white text-sm font-medium text-gray-500 hover:bg-gray-50 disabled:bg-gray-100"
+                >
+                  <span className="sr-only">Previous</span>
+                  <svg className="h-5 w-5" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 20 20" fill="currentColor" aria-hidden="true">
+                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12.707 5.293a1 1 0 010 1.414L9.414 10l3.293 3.293a1 1 0 01-1.414 1.414l-4-4a1 1 0 010-1.414l4-4a1 1 0 011.414 0z" clipRule="evenodd" />
+                  </svg>
+                </button>
+                <button
+                  onClick={() => handlePageChange(currentPage + 1)}
+                  disabled={currentPage === totalPages}
+                  className="relative inline-flex items-center px-2 py-2 rounded-r-md border border-gray-300 bg-white text-sm font-medium text-gray-500 hover:bg-gray-50 disabled:bg-gray-100"
+                >
+                  <span className="sr-only">Next</span>
+                  <svg className="h-5 w-5" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 20 20" fill="currentColor" aria-hidden="true">
+                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M7.293 14.707a1 1 0 010-1.414L10.586 10 7.293 6.707a1 1 0 011.414-1.414l4 4a1 1 0 010 1.414l-4 4a1 1 0 01-1.414 0z" clipRule="evenodd" />
+                  </svg>
+                </button>
+              </nav>
+            </div>
+          </div>
         </div>
       </div>
 
-      {/* Modal for Add/Edit */}
+      {/* Modal */}
       {showModal && (
-        <div className="fixed inset-0 bg-gray-900 bg-opacity-50 flex justify-center items-center z-50">
-          <div className="bg-white p-6 rounded shadow-lg w-1/3">
-            <h5 className="text-lg font-semibold mb-4">
-              {editingBook ? "Edit Book" : "Add Book"}
-            </h5>
-            <input
-              type="text"
-              placeholder="Book Name"
-              className="w-full px-4 py-2 border rounded focus:outline-none focus:ring-2 focus:ring-indigo-500 mb-4"
-              value={bookName}
-              onChange={(e) => setBookName(e.target.value)}
-            />
-            <div className="flex justify-end space-x-4">
-              <button
-                onClick={() => {
-                  setShowModal(false);
-                  setEditingBook(null);
-                  setBookName("");
-                }}
-                className="bg-gray-300 px-4 py-2 rounded hover:bg-gray-400"
-              >
-                Cancel
-              </button>
-              <button
-                onClick={handleSaveBook}
-                className="bg-indigo-500 text-white px-4 py-2 rounded hover:bg-indigo-600"
-              >
-                Save
-              </button>
+        <div className="fixed inset-0 overflow-y-auto z-50" aria-labelledby="modal-title" role="dialog" aria-modal="true">
+          <div className="flex items-end justify-center min-h-screen pt-4 px-4 pb-20 text-center sm:block sm:p-0">
+            <div className="fixed inset-0 bg-gray-500 bg-opacity-75 transition-opacity" aria-hidden="true"></div>
+            <span className="hidden sm:inline-block sm:align-middle sm:h-screen" aria-hidden="true">&#8203;</span>
+            <div className="inline-block align-bottom bg-white rounded-lg text-left overflow-hidden shadow-xl transform transition-all sm:my-8 sm:align-middle sm:max-w-lg sm:w-full">
+              <div className="bg-white px-4 pt-5 pb-4 sm:p-6 sm:pb-4">
+                <div className="sm:flex sm:items-start">
+                  <div className="mt-3 text-center sm:mt-0 sm:text-left w-full">
+                    <h3 className="text-lg leading-6 font-medium text-gray-900" id="modal-title">
+                      {editingBook ? "Edit Book" : "Add New Book"}
+                    </h3>
+                    <div className="mt-4">
+                      <input
+                        type="text"
+                        placeholder="Enter book name"
+                        className="w-full px-3 py-2 border border-gray-300 rounded-md shadow-sm focus:ring-indigo-500 focus:border-indigo-500"
+                        value={bookName}
+                        onChange={(e) => setBookName(e.target.value)}
+                      />
+                    </div>
+                  </div>
+                </div>
+              </div>
+              <div className="bg-gray-50 px-4 py-3 sm:px-6 sm:flex sm:flex-row-reverse">
+                <button
+                  type="button"
+                  onClick={handleSaveBook}
+                  className="w-full inline-flex justify-center rounded-md border border-transparent shadow-sm px-4 py-2 bg-indigo-600 text-base font-medium text-white hover:bg-indigo-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-indigo-500 sm:ml-3 sm:w-auto sm:text-sm"
+                >
+                  {editingBook ? "Save Changes" : "Add Book"}
+                </button>
+                <button
+                  type="button"
+                  onClick={() => {
+                    setShowModal(false);
+                    setEditingBook(null);
+                    setBookName("");
+                  }}
+                  className="mt-3 w-full inline-flex justify-center rounded-md border border-gray-300 shadow-sm px-4 py-2 bg-white text-base font-medium text-gray-700 hover:bg-gray-50 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-indigo-500 sm:mt-0 sm:ml-3 sm:w-auto sm:text-sm"
+                >
+                  Cancel
+                </button>
+              </div>
             </div>
           </div>
         </div>
       )}
 
-      <ToastContainer />
+      {/* Delete Confirmation Modal */}
+      <DeleteConfirmationModal
+        isOpen={deleteModal.isOpen}
+        bookName={deleteModal.bookName}
+        onConfirm={() => handleDeleteBook(deleteModal.bookId)}
+        onCancel={() => setDeleteModal({ isOpen: false, bookId: null, bookName: '' })}
+      />
+
+      {/* Success Modal */}
+      <SuccessModal 
+        isOpen={successModal.isOpen}
+        message={successModal.message}
+        onClose={() => setSuccessModal({ ...successModal, isOpen: false })}
+      />
+
+      {/* Error Modal */}
+      <ErrorModal 
+        isOpen={errorModal.isOpen}
+        message={errorModal.message}
+        onClose={() => setErrorModal({ ...errorModal, isOpen: false })}
+      />
     </div>
   );
 };
