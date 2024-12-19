@@ -1,440 +1,376 @@
-import React, { useEffect, useState } from "react";
+import React, { useEffect } from "react";
 import { useParams } from "react-router-dom";
-import { saveAs } from "file-saver";
-import TransactionForm from "./components/TransactionForm";
-import TransactionDetails from "./components/TransactionDetails";
-import TransactionHistory from "./components/TransactionHistory";
-import EditForm from "./components/EditForm";
-import ImageModal from "./components/ImageModal";
-import SuccessModal from "./components/SuccessModal";
+import { MdEdit, MdDelete } from "react-icons/md";
+import ImageModal from "./ImageModal";
+import TransactionForm from "./TransactionForm";
+import EditTransactionForm from "./EditTransactionForm";
+import { useTransaction } from "./useTransaction";
+import { useTransactionForm } from "./useTransactionForm";
+import { useEditTransaction } from "./useEditTransaction";
+import DeleteConfirmationModal from "../youAdded/DeleteConfirmationModal";
+import SuccessModal from "../youAdded/SuccessModal";
+import ErrorModal from "../youAdded/ErrorModal";
 
 const CollaborativeBookRecords = () => {
   const { transactionId } = useParams();
-  const [transaction, setTransaction] = useState(null);
-  const [updatingEntryId, setUpdatingEntryId] = useState(null);
-  const [isModalOpen, setIsModalOpen] = useState(false);
-  const [modalImage, setModalImage] = useState(null);
-  const [showForm, setShowForm] = useState(false);
-  const [formData, setFormData] = useState({
-    transactionType: "",
-    amount: 0,
-    description: "",
-    file: "",
-  });
-  const [isSubmitting, setIsSubmitting] = useState(false);
-  const userId = localStorage.getItem("userId");
-  const [isEditing, setIsEditing] = useState(false);
-  const [editData, setEditData] = useState({
-    id: "",
-    amount: "",
-    description: "",
-    file: null,
-    transactionType: "",
-  });
-  const [updateTrigger, setUpdateTrigger] = useState(0);
-  const [showSuccessModal, setShowSuccessModal] = useState(false);
+  const {
+    transaction,
+    setTransaction,
+    updatingEntryId,
+    modalState,
+    userId,
+    setModalState,
+    updateTransactionStatus,
+    handleDelete,
+    handleImageClick,
+    handleDownload,
+    errorMessage,
+    setErrorMessage,
+    confirmDelete,
+    cancelDelete,
+    deleteTransactionDetails,
+    closeModal
+  } = useTransaction(transactionId);
 
-  const fetchTransaction = async () => {
-    const token = localStorage.getItem("token");
-    try {
-      const response = await fetch(
-        `${process.env.REACT_APP_URL}/api/collab-transactions/single-transaction/${transactionId}`,
-        {
-          headers: { Authorization: `Bearer ${token}` },
-        }
-      );
-      const data = await response.json();
-      if (data.success) {
-        setTransaction(data.data);
-      } else {
-        console.error("Transaction not found");
-      }
-    } catch (error) {
-      console.error("Error fetching transaction details:", error);
-    }
-  };
+  const {
+    showForm,
+    formData,
+    isSubmitting,
+    error,
+    success,
+    setShowForm,
+    setFormData,
+    setError,
+    setSuccess,
+    handleInputChange,
+    handleAddTransaction,
+  } = useTransactionForm(transactionId, setTransaction);
 
   useEffect(() => {
-    fetchTransaction();
-  }, [transactionId, updateTrigger]);
-
-  const handleInputChange = (e) => {
-    const { name, value } = e.target;
-    setFormData((prev) => ({
-      ...prev,
-      [name]: name === "amount" ? parseFloat(value) || 0 : value,
-    }));
-  };
-
-  const handleAddTransaction = async (e) => {
-    e.preventDefault();
-    if (isSubmitting) return;
-
-    if (!formData.transactionType) {
-      alert("Please select a transaction type.");
-      return;
+    if (error) {
+      setModalState(prev => ({ 
+        ...prev, 
+        showErrorModal: true,
+        errorMessage: error 
+      }));
+      setError("");
     }
+  }, [error, setError, setModalState]);
 
-    if (formData.amount <= 0) {
-      alert("Please enter a valid amount greater than zero.");
-      return;
+  useEffect(() => {
+    if (success) {
+      setModalState(prev => ({ ...prev, showSuccessModal: true }));
+      setSuccess(false);
     }
+  }, [success, setSuccess, setModalState]);
 
-    setIsSubmitting(true);
-    const token = localStorage.getItem("token");
-    const formDataToSend = new FormData();
-    formDataToSend.append("transactionType", formData.transactionType);
-    formDataToSend.append("amount", formData.amount);
-    formDataToSend.append("description", formData.description);
-    if (formData.file) {
-      formDataToSend.append("file", formData.file);
+  const {
+    isEditing,
+    editData,
+    setEditData,
+    openEditForm,
+    closeEditForm,
+    handleEditSubmit,
+  } = useEditTransaction(transactionId, setTransaction, {
+    onSuccess: () => {
+      setModalState(prev => ({ ...prev, showSuccessModal: true }));
+      closeEditForm();
+    },
+    onError: (error) => {
+      setErrorMessage(error.message || "Failed to update transaction. Please try again.");
+      setModalState(prev => ({ ...prev, showErrorModal: true }));
     }
-
-    try {
-      const response = await fetch(
-        `${process.env.REACT_APP_URL}/api/collab-transactions/transactions/${transactionId}/add`,
-        {
-          method: "POST",
-          headers: {
-            Authorization: `Bearer ${token}`,
-          },
-          body: formDataToSend,
-        }
-      );
-
-      const data = await response.json();
-
-      if (response.ok) {
-        setTransaction((prev) => ({
-          ...prev,
-          transactionHistory: [...prev.transactionHistory, data.transaction],
-        }));
-        setShowForm(false);
-        setFormData({
-          transactionType: "",
-          amount: 0,
-          description: "",
-          file: "",
-        });
-        alert("Transaction added successfully!");
-      } else {
-        console.error("Failed to add transaction.");
-        alert(data.message || "Failed to add transaction.");
-      }
-    } catch (error) {
-      console.error("Error adding transaction:", error);
-      alert("Failed to add the transaction due to a network issue.");
-    } finally {
-      setIsSubmitting(false);
-    }
-  };
-
-  const updateTransactionStatus = async (entryId) => {
-    setUpdatingEntryId(entryId);
-    const token = localStorage.getItem("token");
-
-    try {
-      const response = await fetch(
-        `${process.env.REACT_APP_URL}/api/collab-transactions/transactions/${transactionId}/entries/${entryId}/confirm`,
-        {
-          method: "PATCH",
-          headers: { Authorization: `Bearer ${token}` },
-        }
-      );
-
-      if (response.ok) {
-        setTransaction((prev) => ({
-          ...prev,
-          transactionHistory: prev.transactionHistory.map((entry) =>
-            entry._id === entryId
-              ? { ...entry, confirmationStatus: "confirmed" }
-              : entry
-          ),
-        }));
-        alert("Transaction status updated successfully!");
-      } else {
-        console.error("Failed to update transaction status.");
-        alert("Failed to update status. Please try again.");
-      }
-    } catch (error) {
-      console.error("Error updating transaction status:", error);
-    } finally {
-      setUpdatingEntryId(null);
-    }
-  };
-
-  const handleDelete = async (entryId) => {
-    const token = localStorage.getItem("token");
-    if (window.confirm("Are you sure you want to delete this transaction?")) {
-      try {
-        const response = await fetch(
-          `${process.env.REACT_APP_URL}/api/collab-transactions/transactions/${transactionId}/entries/${entryId}`,
-          {
-            method: "DELETE",
-            headers: { Authorization: `Bearer ${token}` },
-          }
-        );
-
-        if (response.ok) {
-          setTransaction((prev) => ({
-            ...prev,
-            transactionHistory: prev.transactionHistory.filter(
-              (entry) => entry._id !== entryId
-            ),
-          }));
-          alert("Transaction deleted successfully!");
-        } else {
-          console.error("Failed to delete transaction.");
-          alert("Failed to delete transaction. Please try again.");
-        }
-      } catch (error) {
-        console.error("Error deleting transaction:", error);
-      }
-    }
-  };
-
-  const openEditForm = (entry) => {
-    setEditData({
-      id: entry._id,
-      amount: entry.amount,
-      transactionType: entry.transactionType,
-      description: entry.description,
-    });
-    setIsEditing(true);
-  };
-
-  const closeEditForm = () => {
-    setIsEditing(false);
-    setEditData({ id: "", amount: "", transactionType: "" });
-  };
-
-  const handleEditSubmit = async (e) => {
-    e.preventDefault();
-
-    const { id, amount, transactionType, description, file } = editData;
-    const token = localStorage.getItem("token");
-
-    // Prepare the form data
-    const formData = new FormData();
-    formData.append("amount", parseFloat(amount));
-    formData.append("transactionType", transactionType.toLowerCase());
-    if (description) formData.append("description", description);
-    if (file) formData.append("file", file);
-
-    try {
-      // Make the API call
-      const response = await fetch(
-        `${process.env.REACT_APP_URL}/api/collab-transactions/transactions/${transactionId}/entries/${id}`,
-        {
-          method: "PATCH",
-          headers: {
-            Authorization: `Bearer ${token}`,
-          },
-          body: formData,
-        }
-      );
-
-      // Parse the response
-      const updatedEntry = await response.json();
-
-      // Check for success
-      if (response.ok) {
-        // Update the state with the updated transaction entry
-        setTransaction((prev) => {
-          const updatedHistory = prev.transactionHistory.map((history) =>
-            history._id === id ? { ...editData, _id: id } : history
-          );
-
-          // Recalculate totals
-          const { totalCredit, totalDebit } = updatedHistory.reduce(
-            (acc, entry) => {
-              if (entry.transactionType === "credit") {
-                acc.totalCredit += parseFloat(entry.amount);
-              } else {
-                acc.totalDebit += parseFloat(entry.amount);
-              }
-              return acc;
-            },
-            { totalCredit: 0, totalDebit: 0 }
-          );
-
-          return {
-            ...prev,
-            transactionHistory: updatedHistory,
-            totalCredit,
-            totalDebit,
-            balance: totalCredit - totalDebit,
-          };
-        });
-
-        // Trigger updates and UI feedback
-        setUpdateTrigger((prev) => prev + 1);
-        closeEditForm();
-        setShowSuccessModal(true);
-      } else {
-        console.error("Unexpected failure:", {
-          responseOk: response.ok,
-          updatedEntry,
-        });
-        alert("Failed to update the transaction. Please try again.");
-      }
-    } catch (error) {
-      // Handle network or other errors
-      console.error("Error updating transaction:", error);
-      alert("An error occurred while updating the transaction.");
-    }
-  };
-
-  const closeModal = () => {
-    setIsModalOpen(false);
-    setModalImage(null);
-  };
-
-  const handleImageClick = (imagePath) => {
-    setModalImage(
-      `${process.env.REACT_APP_URL}/${imagePath.replace(/\\/g, "/")}`
-    );
-    setIsModalOpen(true);
-  };
-
-  const handleDownload = async () => {
-    try {
-      const urlParts = modalImage.split("/");
-      const fileName = urlParts[urlParts.length - 1];
-      const response = await fetch(modalImage);
-      if (!response.ok) {
-        throw new Error("Failed to fetch the file");
-      }
-      const blob = await response.blob();
-      saveAs(blob, fileName);
-    } catch (error) {
-      console.error("Download failed:", error);
-    }
-  };
+  });
 
   if (!transaction) {
-    return (
-      <div className="text-center py-10">Loading transaction details...</div>
-    );
+    return <div className="text-center py-10">Loading transaction details...</div>;
   }
 
   return (
-    <div className="h-screen bg-gray-50 overflow-hidden flex flex-col">
-      <div className="px-4 sm:px-6 lg:px-8 py-4 flex-none">
-        {/* Header Section */}
-        <div className="mb-4">
-          <h1 className="text-2xl font-bold bg-gradient-to-r from-blue-600 to-purple-600 bg-clip-text text-transparent">
-            Transaction Details
-          </h1>
-          <p className="mt-1 text-sm text-gray-600">
-            Manage and track your transactions with {transaction?.collaborator?.name}
-          </p>
-        </div>
+    <div className="min-h-screen bg-gray-50 py-8 px-4 sm:px-6 lg:px-8">
+      <div className="max-w-7xl mx-auto">
+        <h1 className="text-3xl font-bold text-gray-900 mb-8 text-center sm:text-left">
+          Transaction Details
+        </h1>
 
-        {/* Transaction Details Grid */}
-        <div className="grid grid-cols-1 md:grid-cols-3 gap-1 mb-4">
+        {/* Transaction Info Cards Grid */}
+        <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4 mb-8">
+          {/* User Name Card */}
+          <div className="group relative bg-gradient-to-br from-cyan-50 via-sky-50 to-white rounded-xl shadow-sm overflow-hidden hover:shadow-md transition-all duration-300">
+            <div className="absolute inset-0 bg-gradient-to-br from-cyan-100/50 via-sky-50/30 to-transparent opacity-0 group-hover:opacity-100 transition-opacity duration-300"></div>
+            <div className="relative p-6">
+              <p className="text-sm font-medium text-cyan-600/90 mb-1">User Name</p>
+              <p className="text-xl font-bold text-cyan-700 truncate">
+                {transaction.userId.name}
+              </p>
+            </div>
+          </div>
+
+          {/* Other User Card */}
+          <div className="group relative bg-gradient-to-br from-pink-50 via-rose-50 to-white rounded-xl shadow-sm overflow-hidden hover:shadow-md transition-all duration-300">
+            <div className="absolute inset-0 bg-gradient-to-br from-pink-100/50 via-rose-50/30 to-transparent opacity-0 group-hover:opacity-100 transition-opacity duration-300"></div>
+            <div className="relative p-6">
+              <p className="text-sm font-medium text-pink-600/90 mb-1">Other User</p>
+              <p className="text-xl font-bold text-pink-700 truncate">
+                {transaction.clientUserId.name}
+              </p>
+            </div>
+          </div>
+
           {/* Book Name Card */}
-          <div className="bg-gradient-to-br from-purple-500 to-purple-600 rounded-lg shadow p-4 text-white transform transition-all duration-300 hover:scale-102">
-            <h3 className="text-sm font-medium opacity-80 mb-1">Book Name</h3>
-            <p className="text-base font-semibold">{transaction.bookId?.bookname}</p>
+          <div className="group relative bg-gradient-to-br from-indigo-50 via-violet-50 to-white rounded-xl shadow-sm overflow-hidden hover:shadow-md transition-all duration-300">
+            <div className="absolute inset-0 bg-gradient-to-br from-indigo-100/50 via-violet-50/30 to-transparent opacity-0 group-hover:opacity-100 transition-opacity duration-300"></div>
+            <div className="relative p-6">
+              <p className="text-sm font-medium text-indigo-600/90 mb-1">Book Name</p>
+              <p className="text-xl font-bold text-indigo-700 truncate">
+                {transaction.bookId.bookname}
+              </p>
+            </div>
           </div>
 
           {/* Outstanding Balance Card */}
-          <div className="bg-gradient-to-br from-emerald-500 to-emerald-600 rounded-lg shadow p-4 text-white transform transition-all duration-300 hover:scale-102">
-            <h3 className="text-sm font-medium opacity-80 mb-1">Outstanding Balance</h3>
-            <p className="text-xl font-bold">
-              ₹{Math.abs(transaction.outstandingBalance || 0).toLocaleString('en-IN')}
-            </p>
-            <p className="text-xs opacity-80 mt-1">
-              {userId === transaction.initiaterId
+          <div className={`group relative bg-gradient-to-br ${
+            userId === transaction.initiaterId
+              ? transaction.outstandingBalance > 0
+                ? "from-teal-50 via-emerald-50"
+                : "from-orange-50 via-amber-50"
+              : transaction.outstandingBalance > 0
+              ? "from-orange-50 via-amber-50"
+              : "from-teal-50 via-emerald-50"
+          } to-white rounded-xl shadow-sm overflow-hidden hover:shadow-md transition-all duration-300`}>
+            <div className={`absolute inset-0 bg-gradient-to-br ${
+              userId === transaction.initiaterId
                 ? transaction.outstandingBalance > 0
-                  ? "You will receive"
-                  : "You will pay"
+                  ? "from-teal-100/50 via-emerald-50/30"
+                  : "from-orange-100/50 via-amber-50/30"
                 : transaction.outstandingBalance > 0
-                ? "You will pay"
-                : "You will receive"}
-            </p>
-          </div>
-
-          {/* User Details Card */}
-          <div className="bg-gradient-to-br from-pink-500 to-pink-600 rounded-lg shadow p-4 text-white transform transition-all duration-300 hover:scale-102">
-            <h3 className="text-sm font-medium opacity-80 mb-1">User Details</h3>
-            <div className="space-y-1">
-              <div>
-                <p className="text-xs opacity-80">Your Name</p>
-                <p className="text-base font-semibold">{transaction.userId?.name}</p>
-              </div>
-              <div>
-                <p className="text-xs opacity-80">Other User</p>
-                <p className="text-base font-semibold">{transaction.clientUserId?.name}</p>
-              </div>
+                ? "from-orange-100/50 via-amber-50/30"
+                : "from-teal-100/50 via-emerald-50/30"
+            } to-transparent opacity-0 group-hover:opacity-100 transition-opacity duration-300`}></div>
+            <div className="relative p-6">
+              <p className={`text-sm font-medium ${
+                userId === transaction.initiaterId
+                  ? transaction.outstandingBalance > 0
+                    ? "text-teal-600/90"
+                    : "text-orange-600/90"
+                  : transaction.outstandingBalance > 0
+                  ? "text-orange-600/90"
+                  : "text-teal-600/90"
+              } mb-1`}>Outstanding Balance</p>
+              <p className={`text-xl font-bold ${
+                userId === transaction.initiaterId
+                  ? transaction.outstandingBalance > 0
+                    ? "text-teal-700"
+                    : "text-orange-700"
+                  : transaction.outstandingBalance > 0
+                  ? "text-orange-700"
+                  : "text-teal-700"
+              }`}>
+                ₹{Math.abs(transaction.outstandingBalance).toFixed(2)}
+              </p>
             </div>
           </div>
         </div>
 
         {/* Action Buttons */}
-        <div className="flex flex-wrap gap-2 mb-4">
+        <div className="flex justify-center sm:justify-start gap-4 mb-8">
           <button
-            onClick={() => setShowForm(true)}
-            className="inline-flex items-center px-3 py-1.5 bg-gradient-to-r from-blue-600 to-blue-700 text-white text-sm font-medium rounded-md 
-            hover:from-blue-700 hover:to-blue-800 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-blue-500 
-            transition-all duration-200 shadow hover:shadow-md"
+            className="px-4 py-2 bg-gradient-to-r from-red-500 to-red-600 text-white text-sm font-medium rounded-lg hover:from-red-600 hover:to-red-700 transition-all duration-200 shadow-sm hover:shadow focus:ring-2 focus:ring-red-500 focus:ring-opacity-50 focus:outline-none"
+            onClick={() => {
+              setShowForm(true);
+              setFormData((prev) => ({
+                ...prev,
+                transactionType: "you will get",
+              }));
+            }}
           >
-            Add Transaction
+            You Will Give
+          </button>
+          <button
+            className="px-4 py-2 bg-gradient-to-r from-green-500 to-green-600 text-white text-sm font-medium rounded-lg hover:from-green-600 hover:to-green-700 transition-all duration-200 shadow-sm hover:shadow focus:ring-2 focus:ring-green-500 focus:ring-opacity-50 focus:outline-none"
+            onClick={() => {
+              setShowForm(true);
+              setFormData((prev) => ({
+                ...prev,
+                transactionType: "you will give",
+              }));
+            }}
+          >
+            You Will Get
           </button>
         </div>
-      </div>
 
-      {/* Transaction History Section - Scrollable */}
-      <div className="flex-1 overflow-hidden px-4 sm:px-6 lg:px-8">
-        <div className="h-full overflow-auto">
-          <div className="bg-white rounded-lg shadow-sm border border-gray-100">
-            <TransactionHistory
-              transaction={transaction}
-              userId={userId}
-              handleImageClick={handleImageClick}
-              updateTransactionStatus={updateTransactionStatus}
-              updatingEntryId={updatingEntryId}
-              openEditForm={openEditForm}
-              handleDelete={handleDelete}
-            />
+        {showForm && (
+          <div className="fixed inset-0 z-50 overflow-y-auto" aria-labelledby="modal-title" role="dialog" aria-modal="true">
+            <div className="flex items-end justify-center min-h-screen pt-4 px-4 pb-20 text-center sm:block sm:p-0">
+              {/* Background overlay */}
+              <div className="fixed inset-0 bg-gray-500 bg-opacity-75 transition-opacity" aria-hidden="true"></div>
+
+              {/* Modal panel */}
+              <div className="inline-block align-bottom bg-white rounded-xl text-left overflow-hidden shadow-xl transform transition-all sm:my-8 sm:align-middle sm:max-w-lg sm:w-full">
+                <TransactionForm
+                  formData={formData}
+                  isSubmitting={isSubmitting}
+                  onSubmit={handleAddTransaction}
+                  onChange={handleInputChange}
+                  onCancel={() => setShowForm(false)}
+                />
+              </div>
+            </div>
+          </div>
+        )}
+
+        {/* Transaction History */}
+        <div className="bg-white rounded-xl shadow-md overflow-hidden mb-8">
+          <h2 className="text-2xl font-bold text-gray-900 p-6 border-b">
+            Transaction History
+          </h2>
+          <div className="overflow-x-auto">
+            <table className="min-w-full divide-y divide-gray-200">
+              <thead className="bg-gray-50">
+                <tr>
+                  <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Date</th>
+                  <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Initiated By</th>
+                  <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Type</th>
+                  <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Amount</th>
+                  <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Description</th>
+                  <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Files</th>
+                  <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Status</th>
+                  <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Action</th>
+                </tr>
+              </thead>
+              <tbody className="bg-white divide-y divide-gray-200">
+                {transaction?.transactionHistory?.length > 0 ? (
+                  transaction.transactionHistory.map((history) => {
+                    console.log("Transaction history entry:", history);
+                    return (
+                      <tr key={history._id} className="hover:bg-gray-50">
+                        <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-900">
+                          {history?.transactionDate ? new Date(history.transactionDate).toLocaleString() : 'N/A'}
+                        </td>
+                        <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-900">
+                          {history.initiatedBy === transaction.userId._id
+                            ? transaction.userId.name
+                            : transaction.clientUserId.name}
+                        </td>
+                        <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-900">
+                          {history?.transactionType === "you will give" ? "You will get" : "You will give"}
+                        </td>
+                        <td className="px-6 py-4 whitespace-nowrap text-sm font-medium text-gray-900">
+                          ₹{history?.amount?.toFixed(2) || '0.00'}
+                        </td>
+                        <td className="px-6 py-4 text-sm text-gray-900">
+                          {history?.description || ''}
+                        </td>
+                        <td className="px-6 py-4">
+                          {typeof history.file === "string" && history.file.trim() !== "" ? (
+                            <img
+                              src={`${process.env.REACT_APP_URL}/${history.file.replace(/\\/g, "/")}`}
+                              alt="Transaction File"
+                              className="h-16 w-16 object-cover rounded-lg cursor-pointer hover:opacity-75 transition-opacity"
+                              onClick={() => handleImageClick(history.file)}
+                            />
+                          ) : (
+                            <span className="text-sm text-gray-500">No file</span>
+                          )}
+                        </td>
+                        <td className="px-6 py-4 whitespace-nowrap">
+                          {history?.confirmationStatus === "confirmed" ? (
+                            <span className="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium bg-green-100 text-green-800">
+                              Confirmed
+                            </span>
+                          ) : userId === history?.initiaterId ? (
+                            <span className="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium bg-yellow-100 text-yellow-800">
+                              Pending
+                            </span>
+                          ) : (
+                            <button
+                              onClick={() => updateTransactionStatus(history._id)}
+                              disabled={updatingEntryId === history._id}
+                              className={`inline-flex items-center px-3 py-1.5 border border-transparent text-xs font-medium rounded-full shadow-sm text-white bg-blue-600 hover:bg-blue-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-blue-500 ${
+                                updatingEntryId === history._id ? "opacity-50 cursor-not-allowed" : ""
+                              }`}
+                            >
+                              {updatingEntryId === history._id ? "Updating..." : "Confirm"}
+                            </button>
+                          )}
+                        </td>
+                        <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-500">
+                          {userId === history?.initiaterId ? (
+                            <div className="flex space-x-3">
+                              <button
+                                onClick={() => openEditForm(history)}
+                                className="text-yellow-600 hover:text-yellow-900 transition-colors"
+                                title="Edit"
+                              >
+                                <MdEdit className="h-5 w-5" />
+                              </button>
+                              <button
+                                onClick={() => {
+                                  console.log("Delete clicked for history:", history);
+                                  handleDelete(history);
+                                }}
+                                className="text-red-600 hover:text-red-900 transition-colors"
+                                title="Delete"
+                              >
+                                <MdDelete className="h-5 w-5" />
+                              </button>
+                            </div>
+                          ) : (
+                            <span className="text-sm text-gray-500 italic">
+                              Not initiated by you
+                            </span>
+                          )}
+                        </td>
+                      </tr>
+                    );
+                  })
+                ) : (
+                  <tr>
+                    <td colSpan="8" className="px-6 py-10 text-center text-gray-500">
+                      No transaction history available
+                    </td>
+                  </tr>
+                )}
+              </tbody>
+            </table>
           </div>
         </div>
-      </div>
 
-      {/* Forms and Modals */}
-      {showForm && (
-        <TransactionForm
-          formData={formData}
-          isSubmitting={isSubmitting}
-          handleInputChange={handleInputChange}
-          handleAddTransaction={handleAddTransaction}
-          setShowForm={setShowForm}
-        />
-      )}
-
-      {isEditing && (
-        <EditForm
+        <EditTransactionForm
           editData={editData}
-          setEditData={setEditData}
-          handleEditSubmit={handleEditSubmit}
-          closeEditForm={closeEditForm}
+          onSubmit={handleEditSubmit}
+          onChange={setEditData}
+          onCancel={closeEditForm}
+          isOpen={isEditing}
         />
-      )}
 
-      {isModalOpen && (
+        <DeleteConfirmationModal
+          isOpen={modalState.showDeleteModal}
+          onClose={cancelDelete}
+          onConfirm={confirmDelete}
+          transactionDetails={deleteTransactionDetails}
+        />
+
+        <SuccessModal
+          isOpen={modalState.showSuccessModal}
+          message={updatingEntryId ? "Transaction status updated successfully!" : "Action Done Successfully"}
+          onClose={() => setModalState(prev => ({ ...prev, showSuccessModal: false }))}
+        />
+
+        <ErrorModal
+          isOpen={modalState.showErrorModal}
+          message={errorMessage}
+          onClose={() => setModalState(prev => ({ ...prev, showErrorModal: false }))}
+        />
+
         <ImageModal
-          modalImage={modalImage}
-          closeModal={closeModal}
-          handleDownload={handleDownload}
+          isOpen={modalState.isModalOpen}
+          imageUrl={modalState.modalImage}
+          onClose={() => setModalState(prev => ({ ...prev, isModalOpen: false, modalImage: null }))}
+          onDownload={handleDownload}
         />
-      )}
-
-      <SuccessModal
-        isOpen={showSuccessModal}
-        onClose={() => setShowSuccessModal(false)}
-        message="Transaction updated successfully!"
-      />
+      </div>
     </div>
   );
 };
