@@ -7,7 +7,7 @@ const ErrorModal = ({ isOpen, message, onClose }) => {
   return (
     <LazyMotion features={domAnimation}>
       <motion.div
-        className="fixed inset-0 flex items-center justify-center bg-black bg-opacity-50"
+        className="fixed inset-0 flex items-center justify-center bg-black bg-opacity-50 z-[60]"
         initial={{ opacity: 0 }}
         animate={{ opacity: 1 }}
         exit={{ opacity: 0 }}
@@ -46,7 +46,7 @@ const ErrorModal = ({ isOpen, message, onClose }) => {
           <p className="mb-4 text-lg font-semibold">{message}</p>
           <button
             onClick={onClose}
-            className="bg-red-500 text-white px-4 py-2 rounded-md hover:bg-red-600"
+            className="bg-red-500 text-white px-4 py-2 rounded-md hover:bg-red-600 transition-colors"
           >
             Close
           </button>
