@@ -77,13 +77,13 @@ const CollaborativeBookRecords = () => {
       closeEditForm();
     },
     onError: (error) => {
-      setErrorMessage(error.message || "Failed to update transaction. Please try again.");
+      setErrorMessage(error);
       setModalState(prev => ({ ...prev, showErrorModal: true }));
-    }
+    },
   });
 
   if (!transaction) {
-    return <div className="text-center py-10">Loading transaction details...</div>;
+    return null;
   }
 
   return (
