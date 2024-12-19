@@ -11,8 +11,7 @@ import Profile from "./pages/profile/userprofile";
 import Landing from "./components/LandingPage/Landing";
 import Loans from "./pages/loans/loan";
 import Invoice from "./pages/invoice/invoice";
-import CollaborativeBook from "./pages/collaborativeBook/youWereAdded/collaborativeBook";
-import Layout from "./pages/Layout/Layout";
+ import Layout from "./pages/Layout/Layout";
 import CollaborativeBookRecords from "./pages/collaborativeBook/youWereAdded/CollaborativeBookRecords";
  import History from "./pages/collaborativeBook/youAdded/history";
 import AddTransactions from "./pages/collaborativeBook/youAdded/AddTransactions";
@@ -42,8 +41,7 @@ function App() {
           <Route path="profile" element={<Profile />} />
           <Route path="loans" element={<Loans />} />
           <Route path="invoice" element={<Invoice />} />
-          <Route path="collaborativebook" element={<CollaborativeBook />} />
-           <Route path="/history/:transactionId" element={<History />} />
+            <Route path="/history/:transactionId" element={<History />} />
           <Route path="/addtransaction" element={<AddTransactions />} />
           <Route
             path="/transaction-details/:transactionId"
