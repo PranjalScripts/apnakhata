@@ -1,4 +1,4 @@
-import React from 'react';
+import React, { useState } from 'react';
 
 const TransactionForm = ({ formData, isSubmitting, onSubmit, onChange, onCancel }) => {
   const isYouWillGive = formData.transactionType === "you will give";
@@ -15,6 +15,8 @@ const TransactionForm = ({ formData, isSubmitting, onSubmit, onChange, onCancel 
     ring: "focus:ring-red-500",
     text: "text-red-700"
   };
+
+  const [fileError, setFileError] = useState('');
 
   return (
     <>
@@ -89,20 +91,41 @@ const TransactionForm = ({ formData, isSubmitting, onSubmit, onChange, onCancel 
                       strokeLinejoin="round"
                     />
                   </svg>
-                  <div className="flex text-sm text-gray-600">
-                    <label
-                      htmlFor="file-upload"
-                      className={`relative cursor-pointer bg-white rounded-md font-medium ${formColor.text} hover:${formColor.text} focus-within:outline-none focus-within:ring-2 focus-within:ring-offset-2 ${formColor.ring}`}
-                    >
-                      <span>Upload a file</span>
-                      <input
-                        id="file-upload"
-                        name="file-upload"
-                        type="file"
-                        className="sr-only"
-                        onChange={(e) => onChange({ target: { name: 'file', value: e.target.files[0] } })}
-                      />
-                    </label>
+                  <div className="flex flex-col space-y-2">
+                    <div className="flex text-sm text-gray-600">
+                      <label
+                        htmlFor="file-upload"
+                        className={`relative cursor-pointer bg-white rounded-md font-medium ${formColor.text} hover:${formColor.text} focus-within:outline-none focus-within:ring-2 focus-within:ring-offset-2 ${formColor.ring}`}
+                      >
+                        <span>Upload a file</span>
+                        <input
+                          id="file-upload"
+                          name="file-upload"
+                          type="file"
+                          className="sr-only"
+                          accept=".jpg,.jpeg,.png,.pdf"
+                          onChange={(e) => {
+                            const file = e.target.files[0];
+                            setFileError('');
+                            if (file && file.size > 5 * 1024 * 1024) { // 5MB in bytes
+                              setFileError('File size must be less than 5MB');
+                              e.target.value = ''; // Reset the input
+                              return;
+                            }
+                            onChange({ target: { name: 'file', value: file } });
+                          }}
+                        />
+                      </label>
+                      <p className="pl-1">or drag and drop</p>
+                    </div>
+                    <p className="text-xs text-gray-500">
+                      PNG, JPG, PDF up to 5MB
+                    </p>
+                    {fileError && (
+                      <p className="text-sm text-red-600 font-medium">
+                        {fileError}
+                      </p>
+                    )}
                   </div>
                 </div>
               </div>

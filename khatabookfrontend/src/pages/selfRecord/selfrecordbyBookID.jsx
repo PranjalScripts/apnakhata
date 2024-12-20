@@ -109,7 +109,7 @@ const SelfRecordByBookID = () => {
                   {transaction.clientUserId?.name || "N/A"}
                 </td>
                 <td className="border border-gray-300 px-4 py-2">
-                  ₹{transaction.outstandingBalance}
+                  {transaction.outstandingBalance}
                 </td>
                 <td className="border border-gray-300 px-4 py-2">
                   {transaction.clientUserId?.mobile || "N/A"}

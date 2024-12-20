@@ -15,7 +15,7 @@ const DeleteConfirmationModal = ({ isOpen, onConfirm, onCancel, transactionDetai
           </div>
           <h3 className="text-lg font-medium text-gray-900 mb-2">Confirm Delete</h3>
           <p className="text-sm text-gray-500 mb-4">
-            Are you sure you want to delete this transaction of amount ₹{transactionDetails?.amount?.toFixed(2)}?
+            Are you sure you want to delete this transaction of amount {transactionDetails?.amount?.toFixed(2)}?
             This action cannot be undone.
           </p>
           <div className="flex flex-col space-y-2">

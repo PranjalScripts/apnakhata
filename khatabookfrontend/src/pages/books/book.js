@@ -1,13 +1,14 @@
-import React, { useEffect, useState } from "react";
+import React, { useEffect, useState, useContext } from "react";
 import axios from "axios";
-import { FaTh, FaList } from "react-icons/fa";
+import { FaTh, FaList, FaEdit, FaTrash } from "react-icons/fa";
 import SuccessModal from "../collaborativeBook/youAdded/SuccessModal";
 import ErrorModal from "../../components/ErrorModal";
 import DeleteConfirmationModal from "../../components/DeleteConfirmationModal";
+import AddBook from "./AddBook";
+import { BookContext } from "../Layout/Layout";
 
 const BookPage = () => {
   const [books, setBooks] = useState([]);
-  const [bookName, setBookName] = useState("");
   const [editingBook, setEditingBook] = useState(null);
   const [viewMode, setViewMode] = useState("list");
   const [currentPage, setCurrentPage] = useState(1);
@@ -17,11 +18,12 @@ const BookPage = () => {
   const [successModal, setSuccessModal] = useState({ isOpen: false, message: '' });
   const [errorModal, setErrorModal] = useState({ isOpen: false, message: '' });
   const [deleteModal, setDeleteModal] = useState({ isOpen: false, bookId: null, bookName: '' });
+  const { bookAdded } = useContext(BookContext);
 
   useEffect(() => {
     fetchBooks();
     // eslint-disable-next-line
-  }, []);
+  }, [bookAdded]);
 
   const getAuthToken = () => localStorage.getItem("token");
 
@@ -42,58 +44,6 @@ const BookPage = () => {
         message: 'Failed to fetch books. Please try again.'
       });
       console.error("Error fetching books", error);
-    }
-  };
-
-  const handleSaveBook = async () => {
-    try {
-      if (editingBook) {
-        const response = await axios.put(
-          `${process.env.REACT_APP_URL}/api/v2/transactionBooks/update-book/${editingBook._id}`,
-          { bookname: bookName },
-          {
-            headers: {
-              Authorization: `Bearer ${getAuthToken()}`,
-            },
-          }
-        );
-        setBooks(
-          books.map((book) =>
-            book._id === editingBook._id ? response.data.book : book
-          )
-        );
-        setSuccessModal({
-          isOpen: true,
-          message: 'Book updated successfully!'
-        });
-      } else {
-        const response = await axios.post(
-          `${process.env.REACT_APP_URL}/api/v2/transactionBooks/create-books`,
-          { bookname: bookName },
-          {
-            headers: {
-              Authorization: `Bearer ${getAuthToken()}`,
-            },
-          }
-        );
-        setBooks([...books, response.data.book]);
-        setSuccessModal({
-          isOpen: true,
-          message: 'Book added successfully!'
-        });
-      }
-
-      setShowModal(false);
-      setEditingBook(null);
-      setBookName("");
-    } catch (error) {
-      console.error("Error saving book", error);
-      setErrorModal({
-        isOpen: true,
-        message: editingBook ? 
-          'Failed to update book. Please try again.' : 
-          'Failed to add book. Please try again.'
-      });
     }
   };
 
@@ -150,7 +100,6 @@ const BookPage = () => {
             onClick={() => {
               setShowModal(true);
               setEditingBook(null);
-              setBookName("");
             }}
             className="inline-flex items-center px-4 py-2 bg-indigo-600 hover:bg-indigo-700 text-white text-sm font-medium rounded-md shadow-sm transition-colors duration-200 ease-in-out focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-indigo-500"
           >
@@ -239,18 +188,17 @@ const BookPage = () => {
                       <button
                         onClick={() => {
                           setEditingBook(book);
-                          setBookName(book.bookname);
                           setShowModal(true);
                         }}
                         className="text-indigo-600 hover:text-indigo-900 mr-4 transition-colors duration-200"
                       >
-                        Edit
+                        <FaEdit className="w-5 h-5" />
                       </button>
                       <button
                         onClick={() => confirmDelete(book._id, book.bookname)}
                         className="text-red-600 hover:text-red-900 transition-colors duration-200"
                       >
-                        Delete
+                        <FaTrash className="w-5 h-5" />
                       </button>
                     </td>
                   </tr>
@@ -286,7 +234,6 @@ const BookPage = () => {
                     <button
                       onClick={() => {
                         setEditingBook(book);
-                        setBookName(book.bookname);
                         setShowModal(true);
                       }}
                       className={`inline-flex items-center px-4 py-2 ${
@@ -371,52 +318,17 @@ const BookPage = () => {
 
       {/* Modal */}
       {showModal && (
-        <div className="fixed inset-0 overflow-y-auto z-50" aria-labelledby="modal-title" role="dialog" aria-modal="true">
-          <div className="flex items-end justify-center min-h-screen pt-4 px-4 pb-20 text-center sm:block sm:p-0">
-            <div className="fixed inset-0 bg-gray-500 bg-opacity-75 transition-opacity" aria-hidden="true"></div>
-            <span className="hidden sm:inline-block sm:align-middle sm:h-screen" aria-hidden="true">&#8203;</span>
-            <div className="inline-block align-bottom bg-white rounded-lg text-left overflow-hidden shadow-xl transform transition-all sm:my-8 sm:align-middle sm:max-w-lg sm:w-full">
-              <div className="bg-white px-4 pt-5 pb-4 sm:p-6 sm:pb-4">
-                <div className="sm:flex sm:items-start">
-                  <div className="mt-3 text-center sm:mt-0 sm:text-left w-full">
-                    <h3 className="text-lg leading-6 font-medium text-gray-900" id="modal-title">
-                      {editingBook ? "Edit Book" : "Add New Book"}
-                    </h3>
-                    <div className="mt-4">
-                      <input
-                        type="text"
-                        placeholder="Enter book name"
-                        className="w-full px-3 py-2 border border-gray-300 rounded-md shadow-sm focus:ring-indigo-500 focus:border-indigo-500"
-                        value={bookName}
-                        onChange={(e) => setBookName(e.target.value)}
-                      />
-                    </div>
-                  </div>
-                </div>
-              </div>
-              <div className="bg-gray-50 px-4 py-3 sm:px-6 sm:flex sm:flex-row-reverse">
-                <button
-                  type="button"
-                  onClick={handleSaveBook}
-                  className="w-full inline-flex justify-center rounded-md border border-transparent shadow-sm px-4 py-2 bg-indigo-600 text-base font-medium text-white hover:bg-indigo-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-indigo-500 sm:ml-3 sm:w-auto sm:text-sm"
-                >
-                  {editingBook ? "Save Changes" : "Add Book"}
-                </button>
-                <button
-                  type="button"
-                  onClick={() => {
-                    setShowModal(false);
-                    setEditingBook(null);
-                    setBookName("");
-                  }}
-                  className="mt-3 w-full inline-flex justify-center rounded-md border border-gray-300 shadow-sm px-4 py-2 bg-white text-base font-medium text-gray-700 hover:bg-gray-50 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-indigo-500 sm:mt-0 sm:ml-3 sm:w-auto sm:text-sm"
-                >
-                  Cancel
-                </button>
-              </div>
-            </div>
-          </div>
-        </div>
+        <AddBook
+          onBookAdded={(newBook) => setBooks([...books, newBook])}
+          onBookUpdated={(updatedBook) => 
+            setBooks(books.map((book) => book._id === updatedBook._id ? updatedBook : book))
+          }
+          editingBook={editingBook}
+          onClose={() => {
+            setShowModal(false);
+            setEditingBook(null);
+          }}
+        />
       )}
 
       {/* Delete Confirmation Modal */}

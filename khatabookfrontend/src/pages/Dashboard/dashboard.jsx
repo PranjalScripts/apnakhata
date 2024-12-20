@@ -251,12 +251,12 @@ const DashBoard = () => {
                     </td>
                     <td className="px-6 py-4">
                       <span className="text-green-600 font-medium">
-                        ₹{transaction.confirmedYouWillGet || 0}
+                        {transaction.confirmedYouWillGet || 0}
                       </span>
                     </td>
                     <td className="px-6 py-4">
                       <span className="text-red-600 font-medium">
-                        ₹{transaction.confirmedYouWillGive || 0}
+                        {transaction.confirmedYouWillGive || 0}
                       </span>
                     </td>
                     <td className="px-6 py-4">
@@ -267,7 +267,7 @@ const DashBoard = () => {
                           ? 'text-red-600'
                           : 'text-gray-600'
                       }`}>
-                        ₹{transaction.outstandingBalance === 0
+                        {transaction.outstandingBalance === 0
                           ? 0
                           : transaction.outstandingBalance || "N/A"}
                       </span>
