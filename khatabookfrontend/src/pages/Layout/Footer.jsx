@@ -1,6 +1,6 @@
 import React, { useState, useContext } from "react";
 import { useNavigate } from "react-router-dom";
-import { FaBook, FaUsers, FaArrowRight, FaArrowLeft, FaUserPlus,FaChartBar } from "react-icons/fa";
+import { FaBook, FaUsers, FaArrowRight, FaArrowLeft, FaUserPlus, FaChartBar } from "react-icons/fa";
 import AddBook from "../books/AddBook";
 import { BookContext, UserContext } from "./Layout";
 
@@ -17,9 +17,9 @@ const Footer = () => {
   const handleUser = () => {
     navigate("/users");
   };
-const handleHome = () => {
-  navigate("/home");
-}
+  const handleHome = () => {
+    navigate("/home");
+  }
   return (
     <>
       <footer className="fixed bottom-0 w-[81%] bg-white/70 backdrop-blur-[2px]
@@ -27,18 +27,18 @@ const handleHome = () => {
         <div className="flex items-center justify-center space-x-8 md:space-x-12 -ml-24">
           {/* Transaction Direction Legend */}
           <button
-  className="group flex items-center space-x-2 bg-gradient-to-r from-emerald-500/90 to-green-600/90 
+            className="group flex items-center space-x-2 bg-gradient-to-br from-red-500/90 via-red-600/90 to-rose-700/90 
   text-white font-medium py-2 px-4 md:py-2.5 md:px-5 rounded-lg shadow-lg 
-  hover:shadow-emerald-500/25 hover:translate-y-[-1px] active:translate-y-[0px]
-  focus:outline-none focus:ring-2 focus:ring-emerald-500/50 focus:ring-offset-2 
+  hover:shadow-red-500/25 hover:translate-y-[-1px] active:translate-y-[0px]
+  focus:outline-none focus:ring-2 focus:ring-red-500/50 focus:ring-offset-2 
   transition-all duration-200 text-sm md:text-base"
-  onClick={handleHome}
->
-  <div className="p-1.5 bg-white/10 rounded-md group-hover:bg-white/20 transition-colors">
-    <FaChartBar className="w-4 h-4" />
-  </div>
-  <span>Charts</span>
-</button>
+            onClick={handleHome}
+          >
+            <div className="p-1.5 bg-white/10 rounded-md group-hover:bg-white/20 transition-colors">
+              <FaChartBar className="w-4 h-4" />
+            </div>
+            <span>Charts</span>
+          </button>
 
           <div className="flex flex-col  text-sm text-gray-600">
             <div className="flex items-center space-x-2">
@@ -82,28 +82,28 @@ const handleHome = () => {
               <div className="p-1.5 bg-white/10 rounded-md group-hover:bg-white/20 transition-colors">
                 <FaBook className="w-4 h-4" />
               </div>
-              <span>Books</span>
+              <span>All Books</span>
             </button>
 
             <button
-              className="group flex items-center space-x-2 bg-gradient-to-r from-emerald-500/90 to-green-600/90 
+              className="group flex items-center space-x-2 bg-gradient-to-r from-blue-500/90 to-indigo-600/90 
               text-white font-medium py-2 px-4 md:py-2.5 md:px-5 rounded-lg shadow-lg 
-              hover:shadow-emerald-500/25 hover:translate-y-[-1px] active:translate-y-[0px]
-              focus:outline-none focus:ring-2 focus:ring-emerald-500/50 focus:ring-offset-2 
+              hover:shadow-blue-500/25 hover:translate-y-[-1px] active:translate-y-[0px]
+              focus:outline-none focus:ring-2 focus:ring-blue-500/50 focus:ring-offset-2 
               transition-all duration-200 text-sm md:text-base"
               onClick={handleUser}
             >
               <div className="p-1.5 bg-white/10 rounded-md group-hover:bg-white/20 transition-colors">
                 <FaUsers className="w-4 h-4" />
               </div>
-              <span>Users</span>
+              <span>All Users</span>
             </button>
 
             <button
-              className="group flex items-center space-x-2 bg-gradient-to-r from-emerald-500/90 to-green-600/90 
+              className="group flex items-center space-x-2 bg-gradient-to-r from-blue-500/90 to-indigo-600/90 
               text-white font-medium py-2 px-4 md:py-2.5 md:px-5 rounded-lg shadow-lg 
-              hover:shadow-emerald-500/25 hover:translate-y-[-1px] active:translate-y-[0px]
-              focus:outline-none focus:ring-2 focus:ring-emerald-500/50 focus:ring-offset-2 
+              hover:shadow-blue-500/25 hover:translate-y-[-1px] active:translate-y-[0px]
+              focus:outline-none focus:ring-2 focus:ring-blue-500/50 focus:ring-offset-2 
               transition-all duration-200 text-sm md:text-base"
               onClick={handleAddUser}
             >
