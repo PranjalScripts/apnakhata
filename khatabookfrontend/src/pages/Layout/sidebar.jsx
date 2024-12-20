@@ -35,7 +35,7 @@ const Sidebar = () => {
   return (
     <div className="fixed left-0 h-screen w-64 bg-gradient-to-b from-slate-50 to-slate-100 shadow-2xl flex flex-col">
       {/* Logo Section with glass effect */}
-      <div className="relative p-6 bg-white bg-opacity-70 backdrop-blur-sm border-b border-slate-200">
+      <div className="relative p-[1.19rem] bg-white bg-opacity-70 backdrop-blur-sm border-b border-slate-200">
         <div className="flex items-center gap-3">
           <div className="p-2 bg-gradient-to-tr from-pink-500 to-blue-500 rounded-lg shadow-lg">
             <FaBook className="text-xl text-white" />

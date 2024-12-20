@@ -1,6 +1,5 @@
 import React, { useState, useEffect } from "react";
 import { useNavigate } from "react-router-dom";
-//import Sidebar from "../../../pages/Layout/sidebar";
 import axios from "axios";
 import { toast } from "react-toastify";
 
@@ -12,6 +11,7 @@ const ProfileUpdate = ({ onClose }) => {
     phone: "",
     password: "",
   });
+  const [profilePicture, setProfilePicture] = useState(null); // State to hold the profile picture file
 
   useEffect(() => {
     const token = localStorage.getItem("token");
@@ -28,17 +28,36 @@ const ProfileUpdate = ({ onClose }) => {
     });
   };
 
+  const handleFileChange = (e) => {
+    setProfilePicture(e.target.files[0]); // Set the selected file for profile picture
+  };
+
   const handleSubmit = async (e) => {
     e.preventDefault();
+
     try {
       const userId = localStorage.getItem("userId");
       const token = localStorage.getItem("token");
+
+      // Create a FormData object to handle the form data along with the file
+      const formDataToSend = new FormData();
+      formDataToSend.append("name", formData.name);
+      formDataToSend.append("email", formData.email);
+      formDataToSend.append("phone", formData.phone);
+      formDataToSend.append("password", formData.password);
+
+      if (profilePicture) {
+        formDataToSend.append("profilePicture", profilePicture); // Append the profile picture file
+      }
+
+      // Send the form data with the file to the backend
       await axios.put(
         `${process.env.REACT_APP_URL}/api/v1/auth/update-profile/${userId}`,
-        formData,
+        formDataToSend,
         {
           headers: {
             Authorization: `Bearer ${token}`,
+            "Content-Type": "multipart/form-data", // Ensure the request content type is multipart
           },
         }
       );
@@ -50,7 +69,11 @@ const ProfileUpdate = ({ onClose }) => {
   };
 
   return (
-    <form onSubmit={handleSubmit} className="space-y-4 p-6 bg-white shadow-md rounded-lg">
+    <form
+      onSubmit={handleSubmit}
+      className="space-y-4 p-6 bg-white shadow-md rounded-lg"
+      encType="multipart/form-data"
+    >
       <div className="mb-4">
         <label className="block text-sm font-medium text-gray-700">Name</label>
         <input
@@ -60,9 +83,9 @@ const ProfileUpdate = ({ onClose }) => {
           onChange={handleChange}
           className="mt-1 block w-full px-3 py-2 border border-gray-300 rounded-md shadow-sm focus:outline-none focus:ring-blue-500 focus:border-blue-500 sm:text-sm"
           placeholder="Enter your name"
-          required
-        />
+         />
       </div>
+
       <div className="mb-4">
         <label className="block text-sm font-medium text-gray-700">Email</label>
         <input
@@ -72,9 +95,10 @@ const ProfileUpdate = ({ onClose }) => {
           onChange={handleChange}
           className="mt-1 block w-full px-3 py-2 border border-gray-300 rounded-md shadow-sm focus:outline-none focus:ring-blue-500 focus:border-blue-500 sm:text-sm"
           placeholder="Enter your email"
-          required
+           
         />
       </div>
+
       <div className="mb-4">
         <label className="block text-sm font-medium text-gray-700">Phone</label>
         <input
@@ -84,9 +108,10 @@ const ProfileUpdate = ({ onClose }) => {
           onChange={handleChange}
           className="mt-1 block w-full px-3 py-2 border border-gray-300 rounded-md shadow-sm focus:outline-none focus:ring-blue-500 focus:border-blue-500 sm:text-sm"
           placeholder="Enter your phone number"
-          required
+           
         />
       </div>
+
       <div className="mb-4">
         <label className="block text-sm font-medium text-gray-700">Password</label>
         <input
@@ -96,10 +121,23 @@ const ProfileUpdate = ({ onClose }) => {
           onChange={handleChange}
           className="mt-1 block w-full px-3 py-2 border border-gray-300 rounded-md shadow-sm focus:outline-none focus:ring-blue-500 focus:border-blue-500 sm:text-sm"
           placeholder="Enter a new password"
-          required
         />
       </div>
-      <button type="submit" className="w-full inline-flex justify-center py-2 px-4 border border-transparent shadow-sm text-sm font-medium rounded-md text-white bg-blue-600 hover:bg-blue-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-blue-500">
+
+      <div className="mb-4">
+        <label className="block text-sm font-medium text-gray-700">Profile Picture</label>
+        <input
+          type="file"
+          name="profilePicture"
+          onChange={handleFileChange}
+          className="mt-1 block w-full px-3 py-2 border border-gray-300 rounded-md shadow-sm focus:outline-none focus:ring-blue-500 focus:border-blue-500 sm:text-sm"
+        />
+      </div>
+
+      <button
+        type="submit"
+        className="w-full inline-flex justify-center py-2 px-4 border border-transparent shadow-sm text-sm font-medium rounded-md text-white bg-blue-600 hover:bg-blue-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-blue-500"
+      >
         Update Profile
       </button>
     </form>

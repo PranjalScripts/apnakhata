@@ -24,6 +24,8 @@ const userSchema = new mongoose.Schema(
       type: String,
       required: true,
     },
+    profilePicture: { type: String }, // Add this field for storing the file path
+
   },
   {
     timestamps: true
