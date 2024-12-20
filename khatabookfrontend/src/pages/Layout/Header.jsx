@@ -1,8 +1,15 @@
 import { FaSearch, FaCog, FaBell } from "react-icons/fa";
+import { useState } from "react";
 
 export default function Header() {
+  const [imageError, setImageError] = useState(false);
+
+  const userName = localStorage.getItem("username") || "User";
+  const profileImage = localStorage.getItem("profile");
+  const firstLetter = userName.charAt(0).toUpperCase();
+
   return (
-    <div className="fixed  top-0  flex items-center justify-between bg-white border-b border-gray-100 px-8 py-4 w-[81%] z-[10]">
+    <div className="fixed top-0 flex items-center justify-between bg-white border-b border-gray-100 px-8 py-4 w-[81%] z-[10]">
       {/* Title */}
       <h1 className="text-xl font-bold bg-gradient-to-r from-indigo-600 to-blue-500 bg-clip-text text-transparent">
         Overview
@@ -36,14 +43,21 @@ export default function Header() {
         {/* Profile Section */}
         <div className="flex items-center gap-3 pl-4 border-l border-gray-200">
           <div className="hidden md:flex flex-col items-end">
-            <p className="text-sm font-medium text-gray-700">John Doe</p>
+            <p className="text-sm font-medium text-gray-700">{userName}</p>
           </div>
           <div className="relative">
-            <img
-              src="https://via.placeholder.com/40"
-              alt="Profile"
-              className="w-10 h-10 rounded-full object-cover ring-2 ring-white shadow-sm"
-            />
+            {profileImage && !imageError ? (
+              <img
+                src={`${process.env.REACT_APP_URL}${profileImage}`}
+                alt="Profile"
+                className="w-10 h-10 rounded-full object-cover ring-2 ring-white shadow-sm"
+                onError={() => setImageError(true)} // Fallback on error
+              />
+            ) : (
+              <div className="w-10 h-10 rounded-full flex items-center justify-center bg-gray-300 text-white font-bold ring-2 ring-white shadow-sm">
+                {firstLetter}
+              </div>
+            )}
             <div className="absolute bottom-0 right-0 h-3 w-3 bg-green-500 rounded-full ring-2 ring-white"></div>
           </div>
         </div>

@@ -23,7 +23,8 @@ export const useAuth = () => {
     console.log("Login function triggered", user); 
     localStorage.setItem("token", user.token);  
       localStorage.setItem("username", user.name);  
-      localStorage.setItem("userId", user.id);  
+    localStorage.setItem("userId", user.id);
+    localStorage.setItem("profile",user.profilePicture);
     setIsLoggedIn(true);
     setUsername(user.name);
   };
@@ -33,6 +34,7 @@ export const useAuth = () => {
        localStorage.setItem("token", user.token);
        localStorage.setItem("username", user.name);
        localStorage.setItem("userId", user.id);
+       localStorage.setItem("profile",user.profilePicture);
        setIsLoggedIn(true);
        setUsername(user.name);
      };
@@ -43,6 +45,7 @@ export const useAuth = () => {
     localStorage.removeItem("username");
     localStorage.removeItem("userId");
     localStorage.removeItem("user");
+    localStorage.removeItem("profile");
     setIsLoggedIn(false);
     setUsername("");
   };

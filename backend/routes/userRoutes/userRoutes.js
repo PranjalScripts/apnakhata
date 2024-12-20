@@ -9,17 +9,17 @@ const {
 const router = express.Router();
 const authenticate = require("../../middleware/authMiddleware")
 const{ uploadProfilePicture } = require("../../middleware/uploadImageMiddleware")
+
 // Route for user signup
 router.post("/signup", uploadProfilePicture.single("profilePicture"), signup);
+
 // Route for user login
 router.post("/login", login);
 
 // Route for updating user profile (protected)
-router.put("/updateProfile/:userId", uploadProfilePicture.single("profilePicture"), updateProfile);
+router.patch("/update-profile/:userId",  uploadProfilePicture.single("profilePicture"), updateProfile);
 
- 
 // Route for getting user profile (protected)
-router.get("/get-profile",authenticate, getUserProfile);
+router.get("/get-profile", authenticate, getUserProfile);
 
- 
 module.exports = router;
