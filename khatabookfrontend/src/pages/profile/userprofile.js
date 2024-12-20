@@ -1,4 +1,3 @@
- 
 import React, { useEffect, useState } from "react";
 import { useNavigate } from "react-router-dom";
 import axios from "axios";
@@ -55,6 +54,16 @@ const GetUserProfile = () => {
       <h2 className="text-3xl font-bold text-gray-700 mb-8">User Profile</h2>
       {userProfile ? (
         <div className="bg-white shadow-lg rounded-lg p-6 w-full max-w-md">
+          <div className="flex justify-center mb-4">
+            {/* Display profile picture */}
+            {userProfile.profilePicture && (
+              <img
+                src={`${process.env.REACT_APP_URL}/uploads/profile-pictures/${userProfile.profilePicture.split("\\").pop()}`}
+                alt="Profile"
+                className="w-24 h-24 rounded-full object-cover"
+              />
+            )}
+          </div>
           <div className="mb-4">
             <h5 className="text-xl font-semibold text-gray-800">
               {userProfile.name}
