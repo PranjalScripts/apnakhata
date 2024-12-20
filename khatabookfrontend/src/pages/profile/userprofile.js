@@ -1,119 +1,264 @@
-import React, { useEffect, useState } from "react";
+import React, { useEffect, useState, useCallback } from "react";
 import { useNavigate } from "react-router-dom";
 import axios from "axios";
-import ProfileUpdate from "../../components/auth/ProfileUpdate/prorfileupdate";
+import { motion, AnimatePresence } from "framer-motion";
 import { toast } from "react-toastify";
+
+// Import components
+import ProfileHeader from "./components/ProfileHeader";
+import ProfileStats from "./components/ProfileStats";
+import ProfileTabs from "./components/ProfileTabs";
+import ContactInformation from "./components/ContactInformation";
+import UpdateProfileModal from "./components/UpdateProfileModal";
+import ProfileCard from "./components/ProfileCard";
 
 const GetUserProfile = () => {
   const [userProfile, setUserProfile] = useState(null);
   const [loading, setLoading] = useState(true);
   const [showModal, setShowModal] = useState(false);
+  const [activeTab, setActiveTab] = useState("profile");
   const navigate = useNavigate();
+
+  const fetchUserProfile = useCallback(async () => {
+    try {
+      const token = localStorage.getItem("token");
+      const response = await axios.get(
+        `${process.env.REACT_APP_URL}/api/v1/auth/get-profile`,
+        {
+          headers: {
+            Authorization: `Bearer ${token}`,
+          },
+        }
+      );
+      
+      // Construct full URL for profile picture if it exists
+      const userData = response.data.user;
+      if (userData.profilePicture) {
+        userData.profilePictureUrl = `http://localhost:5100${userData.profilePicture}`;
+      }
+      
+      console.log("Profile data with image URL:", userData);
+      setUserProfile(userData);
+      setLoading(false);
+    } catch (error) {
+      console.error("Error fetching user profile", error);
+      toast.error("Error fetching profile");
+      setLoading(false);
+    }
+  }, []);
 
   useEffect(() => {
     const token = localStorage.getItem("token");
 
     if (!token) {
       toast.warn("Please log in to access your profile");
-      navigate("/login"); // Redirect to login if not authenticated
+      navigate("/login");
       return;
     }
 
-    const fetchUserProfile = async () => {
-      try {
-        const response = await axios.get(
-          `${process.env.REACT_APP_URL}/api/v1/auth/get-profile`,
-          {
-            headers: {
-              Authorization: `Bearer ${token}`,
-            },
-          }
-        );
-        setUserProfile(response.data.user);
-      } catch (error) {
-        console.error("Error fetching user profile", error);
-        toast.error("Error fetching profile");
-      } finally {
-        setLoading(false);
-      }
-    };
-
     fetchUserProfile();
-  }, [navigate]);
+  }, [navigate, fetchUserProfile]);
+
+  const handleProfileUpdate = () => {
+    fetchUserProfile(); // Refresh the profile data
+    setShowModal(false); // Close the modal
+  };
 
   if (loading) {
     return (
-      <div className="flex items-center justify-center min-h-screen bg-gray-100">
-        <div className="text-lg text-gray-500 animate-pulse">Loading...</div>
-      </div>
+      <motion.div
+        initial={{ opacity: 0 }}
+        animate={{ opacity: 1 }}
+        exit={{ opacity: 0 }}
+        className="min-h-screen bg-gradient-to-br from-blue-50 via-white to-purple-50 flex flex-col items-center justify-center"
+      >
+        <div className="p-8 bg-white/80 backdrop-blur-lg rounded-2xl shadow-lg">
+          <div className="flex flex-col items-center space-y-4">
+            <div className="relative">
+              <div className="w-16 h-16 border-4 border-blue-500/30 rounded-full animate-pulse"></div>
+              <div className="w-16 h-16 border-4 border-blue-500 border-t-transparent rounded-full animate-spin absolute top-0"></div>
+              <div className="w-16 h-16 border-4 border-purple-500/30 rounded-full animate-pulse absolute top-0"></div>
+            </div>
+            <div className="flex flex-col items-center">
+              <p className="text-lg font-medium bg-gradient-to-r from-blue-600 to-purple-600 bg-clip-text text-transparent">
+                Loading your profile
+              </p>
+              <p className="text-sm text-gray-500">Please wait a moment...</p>
+            </div>
+          </div>
+        </div>
+      </motion.div>
     );
   }
 
-  return (
-    <div className="min-h-screen bg-gray-100 flex flex-col items-center py-10">
-      <h2 className="text-3xl font-bold text-gray-700 mb-8">User Profile</h2>
-      {userProfile ? (
-        <div className="bg-white shadow-lg rounded-lg p-6 w-full max-w-md">
-          <div className="flex justify-center mb-4">
-            {/* Display profile picture */}
-            {userProfile.profilePicture && (
-              <img
-                src={`${process.env.REACT_APP_URL}/uploads/profile-pictures/${userProfile.profilePicture.split("\\").pop()}`}
-                alt="Profile"
-                className="w-24 h-24 rounded-full object-cover"
-              />
-            )}
-          </div>
-          <div className="mb-4">
-            <h5 className="text-xl font-semibold text-gray-800">
-              {userProfile.name}
-            </h5>
-          </div>
-          <div className="mb-2">
-            <p className="text-gray-600">
-              <strong>Email:</strong> {userProfile.email}
-            </p>
-          </div>
-          <div className="mb-4">
-            <p className="text-gray-600">
-              <strong>Phone:</strong> {userProfile.phone}
-            </p>
-          </div>
-          <button
-            className="bg-blue-500 hover:bg-blue-600 text-white font-semibold py-2 px-4 rounded-md w-full"
-            onClick={() => setShowModal(true)}
-          >
-            Update Profile
-          </button>
-        </div>
-      ) : (
-        <div className="text-red-500 bg-red-100 p-4 rounded-md">
-          Failed to load profile data.
-        </div>
-      )}
+  const tabVariants = {
+    hidden: { opacity: 0, y: 20 },
+    visible: { opacity: 1, y: 0 },
+    exit: { opacity: 0, y: -20 },
+  };
 
-      {/* Profile Update Modal */}
-      {showModal && (
-        <div className="fixed inset-0 bg-gray-900 bg-opacity-50 flex justify-center items-center z-50">
-          <div className="bg-white rounded-lg shadow-lg w-full max-w-lg">
-            <div className="flex items-center justify-between px-4 py-2 border-b">
-              <h5 className="text-lg font-semibold text-gray-700">
-                Update Profile
-              </h5>
-              <button
-                className="text-gray-500 hover:text-gray-700 focus:outline-none"
-                onClick={() => setShowModal(false)}
+  return (
+    <motion.div
+      initial={{ opacity: 0 }}
+      animate={{ opacity: 1 }}
+      exit={{ opacity: 0 }}
+      className="min-h-screen bg-gradient-to-br from-blue-50 via-white to-purple-50 flex flex-col items-center py-12 px-4 relative"
+    >
+      <div className="absolute inset-0 overflow-hidden pointer-events-none">
+        <div className="absolute -top-1/2 -right-1/2 w-[1000px] h-[1000px] bg-gradient-to-br from-blue-100/30 to-purple-100/30 rounded-full blur-3xl animate-slow-spin"></div>
+        <div className="absolute -bottom-1/2 -left-1/2 w-[1000px] h-[1000px] bg-gradient-to-tr from-purple-100/30 to-blue-100/30 rounded-full blur-3xl animate-slow-spin-reverse"></div>
+      </div>
+
+      <motion.div
+        className="w-full max-w-4xl mx-auto relative"
+        initial={{ y: 20, opacity: 0 }}
+        animate={{ y: 0, opacity: 1 }}
+        transition={{ duration: 0.5 }}
+      >
+        <ProfileHeader
+          title="Your Profile"
+          subtitle="Manage your account information and settings"
+        />
+
+        {userProfile ? (
+          <motion.div
+            className="bg-white/90 backdrop-blur-xl rounded-2xl shadow-xl overflow-hidden hover:shadow-2xl transition-all duration-300 relative group"
+            initial={{ y: 20, opacity: 0 }}
+            animate={{ y: 0, opacity: 1 }}
+            transition={{ duration: 0.5, delay: 0.2 }}
+          >
+            <ProfileTabs activeTab={activeTab} setActiveTab={setActiveTab} />
+
+            <AnimatePresence mode="wait">
+              <motion.div
+                key={activeTab}
+                initial="hidden"
+                animate="visible"
+                exit="exit"
+                variants={tabVariants}
+                transition={{ duration: 0.3 }}
               >
-                ✕
-              </button>
-            </div>
-            <div className="p-6">
-              <ProfileUpdate onClose={() => setShowModal(false)} />
+                {activeTab === "profile" && (
+                  <div className="relative">
+                    <div className="absolute top-0 left-0 w-full h-1 bg-gradient-to-r from-blue-500 to-purple-500"></div>
+                    <div className="md:flex">
+                      <div className="md:w-1/3 bg-gradient-to-br from-blue-600 to-purple-600 p-8 flex flex-col items-center justify-center relative overflow-hidden">
+                        <ProfileCard 
+                          userProfile={{
+                            ...userProfile,
+                            profilePicture: userProfile.profilePictureUrl || userProfile.profilePicture
+                          }} 
+                        />
+                        <ProfileStats expenses="25,000" income="50,000" />
+                      </div>
+
+                      <div className="md:w-2/3 p-8 relative">
+                        <div className="space-y-6">
+                          <ContactInformation
+                            email={userProfile.email}
+                            phone={userProfile.phone}
+                          />
+
+                          <button
+                            onClick={() => setShowModal(true)}
+                            className="w-full bg-gradient-to-r from-blue-600 to-purple-600 text-white py-3 px-6 rounded-xl font-semibold transition-all duration-300 hover:shadow-lg hover:scale-[1.02] focus:outline-none focus:ring-2 focus:ring-blue-500 focus:ring-offset-2 transform relative group overflow-hidden"
+                          >
+                            <span className="relative z-10">Update Profile</span>
+                            <div className="absolute inset-0 bg-gradient-to-r from-blue-700 to-purple-700 opacity-0 group-hover:opacity-100 transition-opacity duration-300"></div>
+                          </button>
+                        </div>
+                      </div>
+                    </div>
+                  </div>
+                )}
+
+                {activeTab === "security" && (
+                  <div className="p-8">
+                    <h3 className="text-xl font-semibold mb-4">
+                      Security Settings
+                    </h3>
+                    <div className="space-y-4">
+                      <div className="p-4 bg-gray-50 rounded-lg">
+                        <h4 className="font-medium">Two-Factor Authentication</h4>
+                        <p className="text-sm text-gray-500 mt-1">
+                          Add an extra layer of security to your account
+                        </p>
+                      </div>
+                      <div className="p-4 bg-gray-50 rounded-lg">
+                        <h4 className="font-medium">Password Settings</h4>
+                        <p className="text-sm text-gray-500 mt-1">
+                          Change your password or set up password recovery
+                        </p>
+                      </div>
+                    </div>
+                  </div>
+                )}
+
+                {activeTab === "preferences" && (
+                  <div className="p-8">
+                    <h3 className="text-xl font-semibold mb-4">
+                      User Preferences
+                    </h3>
+                    <div className="space-y-4">
+                      <div className="p-4 bg-gray-50 rounded-lg">
+                        <h4 className="font-medium">Notification Settings</h4>
+                        <p className="text-sm text-gray-500 mt-1">
+                          Manage your email and push notifications
+                        </p>
+                      </div>
+                      <div className="p-4 bg-gray-50 rounded-lg">
+                        <h4 className="font-medium">Language & Region</h4>
+                        <p className="text-sm text-gray-500 mt-1">
+                          Set your preferred language and regional settings
+                        </p>
+                      </div>
+                    </div>
+                  </div>
+                )}
+              </motion.div>
+            </AnimatePresence>
+          </motion.div>
+        ) : (
+          <div className="bg-red-50 border-l-4 border-red-500 p-6 rounded-xl shadow-lg hover:shadow-xl transition-shadow duration-300">
+            <div className="flex items-center">
+              <div className="bg-red-100 p-2 rounded-lg">
+                <svg
+                  xmlns="http://www.w3.org/2000/svg"
+                  className="h-6 w-6 text-red-500"
+                  viewBox="0 0 20 20"
+                  fill="currentColor"
+                >
+                  <path
+                    fillRule="evenodd"
+                    d="M18 10a8 8 0 11-16 0 8 8 0 0116 0zm-7 4a1 1 0 11-2 0 1 1 0 012 0zm-1-9a1 1 0 00-1 1v4a1 1 0 102 0V6a1 1 0 00-1-1z"
+                    clipRule="evenodd"
+                  />
+                </svg>
+              </div>
+              <div className="ml-4">
+                <h3 className="text-lg font-semibold text-red-800">
+                  Unable to Load Profile
+                </h3>
+                <p className="text-red-700 mt-1">
+                  Please try refreshing the page or contact support if the issue
+                  persists.
+                </p>
+              </div>
             </div>
           </div>
-        </div>
-      )}
-    </div>
+        )}
+      </motion.div>
+
+      <AnimatePresence>
+        {showModal && (
+          <UpdateProfileModal
+            showModal={showModal}
+            setShowModal={setShowModal}
+            onUpdate={handleProfileUpdate}
+          />
+        )}
+      </AnimatePresence>
+    </motion.div>
   );
 };
 

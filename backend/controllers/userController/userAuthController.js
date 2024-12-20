@@ -2,7 +2,9 @@
 const User = require("../../models/userModel/userModel");
 const { hashPassword, comparePassword } = require("../../helper/hashHelper");
 const jwt = require("jsonwebtoken");
-const { uploadProfilePicture } = require("../../middleware/uploadImageMiddleware");
+const {
+  uploadProfilePicture,
+} = require("../../middleware/uploadImageMiddleware");
 // Signup Function
 const signup = async (req, res) => {
   const { name, email, phone, password } = req.body;
@@ -32,7 +34,12 @@ const signup = async (req, res) => {
 
     // Generate a JWT token
     const token = jwt.sign(
-      { id: newUser._id, email: newUser.email, phone: newUser.phone, name: newUser.name },
+      {
+        id: newUser._id,
+        email: newUser.email,
+        phone: newUser.phone,
+        name: newUser.name,
+      },
       process.env.JWT_SECRET,
       { expiresIn: "7d" }
     );
@@ -51,13 +58,16 @@ const signup = async (req, res) => {
     });
   } catch (error) {
     // Handle Multer file size error
-    if (error.code === 'LIMIT_FILE_SIZE') {
-      return res.status(400).json({ message: 'File size is too large. Maximum allowed size is 5MB.' });
+    if (error.code === "LIMIT_FILE_SIZE") {
+      return res
+        .status(400)
+        .json({
+          message: "File size is too large. Maximum allowed size is 5MB.",
+        });
     }
     res.status(500).json({ message: "Error signing up user", error });
   }
 };
-
 
 // Login Function
 const login = async (req, res) => {
@@ -93,6 +103,7 @@ const login = async (req, res) => {
         name: user.name,
         email: user.email,
         phone: user.phone,
+        profilePicture: user.profilePicture,
       },
       token,
     });
@@ -100,7 +111,6 @@ const login = async (req, res) => {
     res.status(500).json({ message: "Error logging in", error });
   }
 };
-
 
 const updateProfile = async (req, res) => {
   const { name, email, phone, password } = req.body;
@@ -125,7 +135,9 @@ const updateProfile = async (req, res) => {
     if (phone && phone !== user.phone) {
       const phoneExists = await User.findOne({ phone });
       if (phoneExists) {
-        return res.status(400).json({ message: "Phone number is already taken" });
+        return res
+          .status(400)
+          .json({ message: "Phone number is already taken" });
       }
       user.phone = phone;
     }
@@ -142,7 +154,7 @@ const updateProfile = async (req, res) => {
     // If a profile picture is uploaded, save the path
     if (req.file) {
       const profilePicturePath = `/uploads/profile-pictures/${req.file.filename}`;
-      user.profilePhoto = profilePicturePath;
+      user.profilePicture = profilePicturePath;
     }
 
     // Save the updated user
@@ -156,48 +168,49 @@ const updateProfile = async (req, res) => {
         name: user.name,
         email: user.email,
         phone: user.phone,
-        profilePhoto: user.profilePhoto, // Include the updated profile picture path
+        profilePicture: user.profilePicture, // Include the updated profile picture path
       },
     });
   } catch (error) {
     // Handle Multer file size error
-    if (error.code === 'LIMIT_FILE_SIZE') {
-      return res.status(400).json({ message: 'File size is too large. Maximum allowed size is 5MB.' });
+    if (error.code === "LIMIT_FILE_SIZE") {
+      return res
+        .status(400)
+        .json({
+          message: "File size is too large. Maximum allowed size is 5MB.",
+        });
     }
     res.status(500).json({ message: "Error updating user profile", error });
   }
 };
 
-
 //get user profile
- const getUserProfile = async (req, res) => {
-   try {
-     // Extract the JWT token from the Authorization header
-     const token = req.headers.authorization.split(" ")[1];
-     if (!token) {
-       return res
-         .status(401)
-         .json({ message: "Access denied. No token provided." });
-     }
+const getUserProfile = async (req, res) => {
+  try {
+    // Extract the JWT token from the Authorization header
+    const token = req.headers.authorization.split(" ")[1];
+    if (!token) {
+      return res
+        .status(401)
+        .json({ message: "Access denied. No token provided." });
+    }
 
-     // Verify the token and extract the user ID
-     const decoded = jwt.verify(token, process.env.JWT_SECRET);
-     const userId = decoded.id;
+    // Verify the token and extract the user ID
+    const decoded = jwt.verify(token, process.env.JWT_SECRET);
+    const userId = decoded.id;
 
-     // Find the user by their ID
-     const user = await User.findById(userId).select("-password"); // Exclude the password from the response
-     if (!user) {
-       return res.status(404).json({ message: "User not found." });
-     }
+    // Find the user by their ID
+    const user = await User.findById(userId).select("-password"); // Exclude the password from the response
+    if (!user) {
+      return res.status(404).json({ message: "User not found." });
+    }
 
-     // Send user profile data
-     res.status(200).json({ user });
-   } catch (error) {
-     console.error(error);
-     res.status(500).json({ message: "Server error." });
-   }
- };
+    // Send user profile data
+    res.status(200).json({ user });
+  } catch (error) {
+    console.error(error);
+    res.status(500).json({ message: "Server error." });
+  }
+};
 
-
- module.exports = { signup, login, updateProfile ,getUserProfile};
- 
+module.exports = { signup, login, updateProfile, getUserProfile };
