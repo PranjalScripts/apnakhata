@@ -65,7 +65,7 @@ const DeleteConfirmationModal = ({ isOpen, onClose, onConfirm, transactionDetail
                 Are you sure you want to delete this transaction? This action cannot be undone.
                 {transactionDetails && (
                   <span className="block mt-2 text-sm">
-                    Amount: ₹{transactionDetails.amount} ({transactionDetails.transactionType})
+                    Amount: {transactionDetails.amount} ({transactionDetails.transactionType})
                   </span>
                 )}
               </motion.p>

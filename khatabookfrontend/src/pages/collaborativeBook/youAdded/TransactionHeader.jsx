@@ -1,13 +1,7 @@
 import React from 'react';
 
 const TransactionHeader = ({ transaction }) => {
-  const formatCurrency = (amount) => {
-    return new Intl.NumberFormat('en-IN', {
-      style: 'currency',
-      currency: 'INR',
-      minimumFractionDigits: 2,
-    }).format(Math.abs(amount));
-  };
+  
 
   return (
     <div className="bg-white rounded-xl shadow-lg overflow-hidden">
@@ -69,7 +63,7 @@ const TransactionHeader = ({ transaction }) => {
                 </svg>
                 <span className="font-semibold">Outstanding Balance</span>
               </div>
-              <p className="text-gray-700 font-medium">{formatCurrency(transaction.outstandingBalance)}</p>
+              <p className="text-gray-700 font-medium">{transaction.outstandingBalance}</p>
             </div>
           </div>
         </div>

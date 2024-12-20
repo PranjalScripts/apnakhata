@@ -1,29 +1,69 @@
-import React from 'react';
-import { Outlet } from 'react-router-dom';
+import React, { useState, createContext } from 'react';
+import { Outlet, useLocation, useNavigate } from 'react-router-dom';
 import Header from './Header';
 import Sidebar from './sidebar';
 import Footer from './Footer';
+import AddUser from '../clientUsers/AddUser';
+import SuccessModal from '../../components/SuccessModal';
+
+export const BookContext = createContext();
+export const UserContext = createContext();
 
 const Layout = () => {
-    //   const location = useLocation();
+    const location = useLocation();
+    const navigate = useNavigate();
+    const [showAddUserModal, setShowAddUserModal] = useState(false);
+    const [bookAdded, setBookAdded] = useState(false);
+    const [userAdded, setUserAdded] = useState(false);
+    const [successModal, setSuccessModal] = useState({ isOpen: false, message: "" });
 
-    // Render Sidebar, Header, and child pages for all routes except `/`
+    const handleAddUser = () => {
+        setShowAddUserModal(prev => !prev);
+    };
+
+    const handleBookAdded = () => {
+        setBookAdded(prev => !prev); // Toggle to trigger useEffect in BookPage
+    };
+
+    const handleUserAdded = (user) => {
+        setUserAdded(prev => !prev);
+        setSuccessModal({ isOpen: true, message: "User added successfully!" });
+        setTimeout(() => {
+            setSuccessModal({ isOpen: false, message: "" });
+        }, 2000);
+    };
+
     return (
-        <div className='flex flex-row gap-2'>
+        <BookContext.Provider value={{ bookAdded, handleBookAdded }}>
+            <UserContext.Provider value={{ showAddUserModal, handleAddUser, userAdded, handleUserAdded }}>
+                <div className='flex flex-row gap-2'>
 
-            <div className='ml-64'>
-                <Sidebar />
-            </div>
-            <div className='flex flex-col gap-2 w-full'>
-                <div className='mb-16'>
-                    <Header />
+                    <div className='ml-64'>
+                        <Sidebar />
+                    </div>
+                    <div className='flex flex-col gap-2 w-full'>
+                        <div className='mb-16'>
+                            <Header />
+                        </div>
+                        <div className='pb-16'>
+                            <Outlet />
+                        </div>
+                        <div><Footer /></div>
+                    </div>
                 </div>
-                <div className='pb-16'>
-                    <Outlet />
-                </div>
-                <div><Footer/></div>
-            </div>
-        </div>
+                {showAddUserModal && (
+                    <AddUser 
+                        onUserAdded={handleUserAdded}
+                        onClose={() => setShowAddUserModal(false)}
+                    />
+                )}
+                <SuccessModal
+                    isOpen={successModal.isOpen}
+                    message={successModal.message}
+                    onClose={() => setSuccessModal({ isOpen: false, message: "" })}
+                />
+            </UserContext.Provider>
+        </BookContext.Provider>
     );
 };
 

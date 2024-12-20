@@ -88,7 +88,7 @@ const TransactionTable = ({
                     </td>
                     <td className="px-6 py-4 whitespace-nowrap text-sm font-semibold">
                       <span className={`${history?.transactionType === 'you will give' ? 'text-red-600' : 'text-green-600'}`}>
-                        ₹{formatAmount(history?.amount)}
+                      {formatAmount(history?.amount)}
                       </span>
                     </td>
                     <td className="px-6 py-4 text-sm text-gray-600">

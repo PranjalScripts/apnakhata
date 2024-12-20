@@ -77,17 +77,17 @@ const CollaborativeBookRecords = () => {
       closeEditForm();
     },
     onError: (error) => {
-      setErrorMessage(error);
+      setErrorMessage(error.message || "Failed to update transaction. Please try again.");
       setModalState(prev => ({ ...prev, showErrorModal: true }));
-    },
+    }
   });
 
   if (!transaction) {
-    return null;
+    return <div className="text-center py-10">Loading transaction details...</div>;
   }
 
   return (
-    <div className="min-h-screen bg-gray-50 py-8 px-4 sm:px-6 lg:px-8">
+    <div className="min-h-screen  ">
       <div className="max-w-7xl mx-auto">
         <h1 className="text-3xl font-bold text-gray-900 mb-8 text-center sm:text-left">
           Transaction Details
@@ -166,7 +166,7 @@ const CollaborativeBookRecords = () => {
                   ? "text-orange-700"
                   : "text-teal-700"
               }`}>
-                ₹{Math.abs(transaction.outstandingBalance).toFixed(2)}
+                {Math.abs(transaction.outstandingBalance).toFixed(2)}
               </p>
             </div>
           </div>
@@ -257,19 +257,31 @@ const CollaborativeBookRecords = () => {
                           {history?.transactionType === "you will give" ? "You will get" : "You will give"}
                         </td>
                         <td className="px-6 py-4 whitespace-nowrap text-sm font-medium text-gray-900">
-                          ₹{history?.amount?.toFixed(2) || '0.00'}
+                          {history?.amount?.toFixed(2) || '0.00'}
                         </td>
                         <td className="px-6 py-4 text-sm text-gray-900">
                           {history?.description || ''}
                         </td>
                         <td className="px-6 py-4">
                           {typeof history.file === "string" && history.file.trim() !== "" ? (
-                            <img
-                              src={`${process.env.REACT_APP_URL}/${history.file.replace(/\\/g, "/")}`}
-                              alt="Transaction File"
-                              className="h-16 w-16 object-cover rounded-lg cursor-pointer hover:opacity-75 transition-opacity"
-                              onClick={() => handleImageClick(history.file)}
-                            />
+                            history.file.toLowerCase().endsWith('.pdf') ? (
+                              <div 
+                                className="text-blue-600 hover:text-blue-800 cursor-pointer flex items-center gap-2"
+                                onClick={() => window.open(`${process.env.REACT_APP_URL}/${history.file.replace(/\\/g, "/")}`, '_blank')}
+                              >
+                                <svg className="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg">
+                                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M7 21h10a2 2 0 002-2V9.414a1 1 0 00-.293-.707l-5.414-5.414A1 1 0 0012.586 3H7a2 2 0 00-2 2v14a2 2 0 002 2z" />
+                                </svg>
+                                <span>View PDF</span>
+                              </div>
+                            ) : (
+                              <img
+                                src={`${process.env.REACT_APP_URL}/${history.file.replace(/\\/g, "/")}`}
+                                alt="Transaction File"
+                                className="h-16 w-16 object-cover rounded-lg cursor-pointer hover:opacity-75 transition-opacity"
+                                onClick={() => handleImageClick(`${process.env.REACT_APP_URL}/${history.file.replace(/\\/g, "/")}`, history.file)}
+                              />
+                            )
                           ) : (
                             <span className="text-sm text-gray-500">No file</span>
                           )}

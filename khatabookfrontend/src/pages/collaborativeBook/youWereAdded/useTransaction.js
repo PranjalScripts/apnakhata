@@ -47,7 +47,7 @@ export const useTransaction = (transactionId) => {
       const response = await fetch(
         `${process.env.REACT_APP_URL}/api/collab-transactions/transactions/${transactionId}/entries/${entryId}/confirm`,
         {
-          method: "PUT",
+          method: "PATCH",
           headers: { Authorization: `Bearer ${token}` },
         }
       );
