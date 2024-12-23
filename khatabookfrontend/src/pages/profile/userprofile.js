@@ -34,7 +34,7 @@ const GetUserProfile = () => {
       // Construct full URL for profile picture if it exists
       const userData = response.data.user;
       if (userData.profilePicture) {
-        userData.profilePictureUrl = `http://localhost:5100${userData.profilePicture}`;
+        userData.profilePictureUrl = `${process.env.REACT_APP_URL}${userData.profilePicture}`;
       }
       
       console.log("Profile data with image URL:", userData);
