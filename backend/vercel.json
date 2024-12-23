@@ -30,6 +30,15 @@
     {
       "src": "/uploads(.*)",
       "dest": "index.js"
+    },
+    {
+      "src": "/auth(.*)",
+      "dest": "index.js"
+    },
+
+    {
+      "src": "/(.*)",
+      "dest": "index.js"
     }
   ]
 }
