@@ -17,15 +17,32 @@ const userSchema = new mongoose.Schema(
     },
     phone: {
       type: String,
-      required: true,
+      required: function() {
+        // Only required if not using Google auth
+        return !this.googleId;
+      },
       unique: true,
+      sparse: true
     },
     password: {
       type: String,
-      required: true,
+      required: function() {
+        // Only required if not using Google auth
+        return !this.googleId;
+      }
     },
-    profilePicture: { type: String }, // Add this field for storing the file path
-
+    profilePicture: { 
+      type: String 
+    },
+    // Google Auth fields
+    googleId: {
+      type: String,
+      unique: true,
+      sparse: true
+    },
+    avatar: {
+      type: String
+    }
   },
   {
     timestamps: true

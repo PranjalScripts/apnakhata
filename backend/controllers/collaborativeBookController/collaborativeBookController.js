@@ -6,7 +6,7 @@ const upload = require("../../middleware/uploadMiddleware"); // Multer middlewar
 
 require("dotenv").config();
 
-notificationapi.init(process.env.clientId, process.env.clientSecret);
+notificationapi.init(process.env.NotificationclientId, process.env.NotificationclientSecret);
 
 // Fetch transactions for a user or client
 const getTransactions = async (req, res) => {
