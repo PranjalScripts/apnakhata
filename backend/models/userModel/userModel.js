@@ -17,10 +17,9 @@ const userSchema = new mongoose.Schema(
     },
     phone: {
       type: String,
-      sparse: true, // This allows multiple null values
+      sparse: true,
       validate: {
         validator: function(v) {
-          // Return true if value is null/undefined or if it's a valid phone number
           return v === null || v === undefined || /^\+[1-9]\d{1,14}$/.test(v);
         },
         message: props => `${props.value} is not a valid phone number!`
@@ -29,14 +28,12 @@ const userSchema = new mongoose.Schema(
     password: {
       type: String,
       required: function() {
-        // Only required if not using Google auth
         return !this.googleId;
       }
     },
     profilePicture: { 
       type: String 
     },
-    // Google Auth fields
     googleId: {
       type: String,
       unique: true,
@@ -54,19 +51,38 @@ const userSchema = new mongoose.Schema(
   { timestamps: true }
 );
 
-// Create a compound index for phone and countryCode
-userSchema.index({ phone: 1, countryCode: 1 }, { 
-  unique: true, 
-  sparse: true,
-  partialFilterExpression: { phone: { $type: "string" } }  // Only index non-null phone numbers
-});
-
-// Remove any existing indexes on just the phone field
-userSchema.collection.dropIndex("phone_1", function(err, result) {
-  if (err) {
-    console.log("Error in dropping index:", err);
+// Remove all indexes except _id
+userSchema.pre('save', async function(next) {
+  try {
+    if (!this.collection.conn) {
+      return next();
+    }
+    
+    const indexes = await this.collection.getIndexes();
+    for (let indexName in indexes) {
+      if (indexName !== '_id_' && indexName.includes('phone')) {
+        await this.collection.dropIndex(indexName);
+      }
+    }
+    next();
+  } catch (error) {
+    console.log('Index operation error (can safely ignore):', error);
+    next();
   }
 });
+
+// Create compound index for phone and countryCode
+userSchema.index(
+  { phone: 1, countryCode: 1 }, 
+  { 
+    unique: true, 
+    sparse: true,
+    partialFilterExpression: { 
+      phone: { $type: "string" },
+      countryCode: { $type: "string" }
+    }
+  }
+);
 
 const User = mongoose.model("User", userSchema);
 
