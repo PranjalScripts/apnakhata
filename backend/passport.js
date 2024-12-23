@@ -18,31 +18,38 @@ passport.use(
             try {
                 console.log('Profile from Google:', profile); // Debug log
 
-                // Find or create user
-                let user = await User.findOne({ googleId: profile.id });
+                // Find user by Google ID or email
+                let user = await User.findOne({ 
+                    $or: [
+                        { googleId: profile.id },
+                        { email: profile.email }
+                    ]
+                });
                 
-                if (!user) {
-                    // Check if email already exists
-                    const existingUser = await User.findOne({ email: profile.email });
-                    if (existingUser) {
-                        // Update existing user with Google ID
-                        existingUser.googleId = profile.id;
-                        existingUser.name = profile.displayName;
-                        existingUser.profilePicture = profile.picture;
-                        await existingUser.save();
-                        console.log('Updated existing user:', existingUser); // Debug log
-                        return done(null, existingUser);
+                if (user) {
+                    // Update existing user
+                    user.googleId = profile.id;
+                    user.name = profile.displayName;
+                    user.profilePicture = profile.picture;
+                    // Don't overwrite phone if it exists
+                    if (!user.hasCompletedProfile) {
+                        user.hasCompletedProfile = false;
                     }
-
-                    // Create new user
-                    user = await User.create({
+                    await user.save();
+                    console.log('Updated existing user:', user);
+                } else {
+                    // Create new user without phone number
+                    user = new User({
                         googleId: profile.id,
                         email: profile.email,
                         name: profile.displayName,
                         profilePicture: profile.picture,
-                        hasCompletedProfile: false
+                        hasCompletedProfile: false,
+                        phone: null,
+                        countryCode: null
                     });
-                    console.log('Created new user:', user); // Debug log
+                    await user.save();
+                    console.log('Created new user:', user);
                 }
 
                 return done(null, user);
@@ -55,14 +62,14 @@ passport.use(
 );
 
 passport.serializeUser((user, done) => {
-    console.log('Serializing user:', user.id); // Debug log
+    console.log('Serializing user:', user.id);
     done(null, user.id);
 });
 
 passport.deserializeUser(async (id, done) => {
     try {
         const user = await User.findById(id);
-        console.log('Deserialized user:', user); // Debug log
+        console.log('Deserialized user:', user);
         done(null, user);
     } catch (error) {
         console.error('Error deserializing user:', error);

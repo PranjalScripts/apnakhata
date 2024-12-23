@@ -17,9 +17,14 @@ const userSchema = new mongoose.Schema(
     },
     phone: {
       type: String,
-      unique: true,
       sparse: true, // This allows multiple null values
-      default: null
+      validate: {
+        validator: function(v) {
+          // Return true if value is null/undefined or if it's a valid phone number
+          return v === null || v === undefined || /^\+[1-9]\d{1,14}$/.test(v);
+        },
+        message: props => `${props.value} is not a valid phone number!`
+      }
     },
     password: {
       type: String,
@@ -49,8 +54,19 @@ const userSchema = new mongoose.Schema(
   { timestamps: true }
 );
 
-// Add index for phone with sparse option
-userSchema.index({ phone: 1 }, { unique: true, sparse: true });
+// Create a compound index for phone and countryCode
+userSchema.index({ phone: 1, countryCode: 1 }, { 
+  unique: true, 
+  sparse: true,
+  partialFilterExpression: { phone: { $type: "string" } }  // Only index non-null phone numbers
+});
+
+// Remove any existing indexes on just the phone field
+userSchema.collection.dropIndex("phone_1", function(err, result) {
+  if (err) {
+    console.log("Error in dropping index:", err);
+  }
+});
 
 const User = mongoose.model("User", userSchema);
 
