@@ -124,7 +124,7 @@ const ProfileUpdate = ({ onClose, onUpdate }) => {
       }
 
       const response = await axios.patch(
-        `http://localhost:5100/api/v1/auth/update-profile/${userId}`,
+        `${process.env.REACT_APP_URL}/api/v1/auth/update-profile/${userId}`,
         formDataToSend,
         {
           headers: {
