@@ -9,7 +9,8 @@ export default function Header() {
   const firstLetter = userName.charAt(0).toUpperCase();
 
   return (
-    <div className="fixed top-0 flex items-center justify-between bg-white border-b border-gray-100 px-8 py-4 w-[81%] z-[10]">
+    <div className="fixed top-0 flex items-center justify-between bg-white border-b border-gray-100 px-8 py-4 z-[10] " style={{ width: "calc(100% - 260px)" }}
+>
       {/* Title */}
       <h1 className="text-xl font-bold bg-gradient-to-r from-indigo-600 to-blue-500 bg-clip-text text-transparent">
         Overview
