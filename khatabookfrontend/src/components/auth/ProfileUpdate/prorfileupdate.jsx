@@ -29,7 +29,7 @@ const ProfileUpdate = ({ onClose, onUpdate }) => {
     const fetchUserData = async () => {
       try {
         const response = await axios.get(
-          "http://localhost:5100/api/v1/auth/get-profile",
+          `${process.env.REACT_APP_URL}/api/v1/auth/get-profile`,
           {
             headers: {
               Authorization: `Bearer ${token}`,
@@ -51,7 +51,7 @@ const ProfileUpdate = ({ onClose, onUpdate }) => {
           const pathParts = userData.profilePicture.split('uploads');
           if (pathParts.length > 1) {
             const relativePath = pathParts[1].replace(/\\/g, '/');
-            profilePicUrl = `http://localhost:5100/uploads${relativePath}`;
+            profilePicUrl = `${process.env.REACT_APP_URL}/uploads${relativePath}`;
           }
         }
         
