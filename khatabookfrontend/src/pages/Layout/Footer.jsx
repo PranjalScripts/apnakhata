@@ -22,8 +22,8 @@ const Footer = () => {
   }
   return (
     <>
-      <footer className="fixed bottom-0 w-[81%] bg-white/70 backdrop-blur-[2px]
-      p-3 md:p-4 border-t border-gray-200 z-[10]">
+      <footer className="fixed bottom-0   bg-white/70 backdrop-blur-[2px]
+      p-3 md:p-4 border-t border-gray-200 z-[10]"  style={{ width: "calc(100% - 260px)" }}>
         <div className="flex items-center justify-center space-x-8 md:space-x-12 -ml-24">
           {/* Transaction Direction Legend */}
           <button
