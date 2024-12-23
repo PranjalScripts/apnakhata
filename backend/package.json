@@ -14,7 +14,9 @@
     "colors": "^1.4.0",
     "cors": "^2.8.5",
     "dotenv": "^16.4.5",
+    "ejs": "^3.1.10",
     "express": "^4.21.1",
+    "express-session": "^1.18.1",
     "json": "^11.0.0",
     "jsonwebtoken": "^9.0.2",
     "mongoose": "^8.8.2",
@@ -23,6 +25,8 @@
     "nodemailer": "^6.9.16",
     "nodemon": "^3.1.7",
     "notificationapi-node-server-sdk": "^2.2.1",
+    "passport": "^0.7.0",
+    "passport-google-oauth2": "^0.2.0",
     "token": "^0.1.0",
     "web": "^0.0.2"
   }

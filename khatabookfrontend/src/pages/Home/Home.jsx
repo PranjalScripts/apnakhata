@@ -1,20 +1,50 @@
- 
-import React, { useEffect, useState } from "react";
+ import React, { useEffect, useState } from "react";
 import SummaryCard from "./SummaryCard";
 import BarChart from "./BarChart";
 import PieChart from "./PieChart";
 import TransactionList from "./TransactionList";
 import TransactionDetails from "./TransactionDetails";
+import PhoneUpdateModal from "../../components/auth/PhoneUpdate/PhoneUpdateModal";
 import axios from "axios";
-import { useNavigate } from "react-router-dom";
+import { useNavigate, useLocation } from "react-router-dom";
+import { useAuth } from "../../context/AuthContext";
+
 const Home = () => {
-  //eslint-disable-next-line
-  const [data,setData] = useState([]);
+  const [data, setData] = useState([]);
   const [totalBalance, setTotalBalance] = useState(0);
   const [totalCredit, setTotalCredit] = useState(0);
   const [totalDebit, setTotalDebit] = useState(0);
+  const [showPhoneModal, setShowPhoneModal] = useState(false);
   const navigate = useNavigate();
+  const location = useLocation();
+  const { login } = useAuth();
   const userId = localStorage.getItem("userId");
+
+  // Handle Google Auth token
+  useEffect(() => {
+    const params = new URLSearchParams(location.search);
+    const token = params.get('token');
+    
+    if (token) {
+      // Store token and update auth context
+      localStorage.setItem('token', token);
+      
+      // Decode token to get user info
+      const user = JSON.parse(atob(token.split('.')[1]));
+      localStorage.setItem('userId', user.id);
+      
+      // Check if phone number needs to be updated
+      if (!user.hasPhone) {
+        setShowPhoneModal(true);
+      }
+      
+      // Update auth context
+      login({ token, ...user });
+      
+      // Remove token from URL
+      navigate('/home', { replace: true });
+    }
+  }, [location, login, navigate]);
 
   // Fetch transaction data on component mount
   useEffect(() => {
@@ -61,6 +91,9 @@ const Home = () => {
   
   return (
     <div>
+      {showPhoneModal && (
+        <PhoneUpdateModal onClose={() => setShowPhoneModal(false)} />
+      )}
       <div className="p-6 bg-gray-100 min-h-screen w-full">
         {/* Top Summary Section */}
         <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-6">

@@ -3,17 +3,21 @@ const cors = require("cors");
 const morgan = require("morgan");
 const dotenv = require("dotenv");
 const colors = require("colors");
+
+// Load env vars first
+dotenv.config();
+
+const session = require('express-session');
+const passport = require('./passport');
 const userRoutes =require("./routes/userRoutes/userRoutes")
 const connectDb = require("./config/connectDb");
 const bookRoutes = require("./routes/bookRoute/bookRoutes");
 const clientUserRoutes = require("./routes/clientUserRoutes/clientUserRoutes");
 const collabtransactionRoutes = require("./routes/transactionRoutes/collabtransaction");
 const selftransactionRoutes = require("./routes/transactionRoutes/selfrecord");
+const authRoutes = require('./routes/auth');
 const path = require("path");
 
- 
-dotenv.config();
- 
 //databse call
 connectDb();
  
@@ -30,6 +34,22 @@ app.use(
     allowedHeaders: "Content-Type, Authorization",
   })
 );
+
+// Session configuration
+app.use(session({
+    secret: process.env.SESSION_SECRET,
+    resave: false,
+    saveUninitialized: false,
+    cookie: {
+        secure: process.env.NODE_ENV === 'production',
+        maxAge: 24 * 60 * 60 * 1000 // 24 hours
+    }
+}));
+
+// Initialize Passport
+app.use(passport.initialize());
+app.use(passport.session());
+
 //api for authentications
 app.use("/api/v1/auth", userRoutes);
 app.use("/uploads", express.static(path.join(__dirname, "uploads")));
@@ -42,10 +62,11 @@ app.use("/api/v3/client", clientUserRoutes);
 //api for self transactions
 app.use("/api/v4/transaction", selftransactionRoutes);
 
+//api for collab transactions
+app.use("/api/collab-transactions", collabtransactionRoutes);
 
- //api for collab transactions
- app.use("/api/collab-transactions", collabtransactionRoutes);
- 
+app.use('/auth', authRoutes);
+
 app.get("/", (req, res) => { res.send("<h1> Welcome to the Expense Management API</h1>") });
 
 //port
@@ -55,4 +76,3 @@ const PORT = 5100 || process.env.PORT;
 app.listen(PORT, () => {
   console.log(`Server running on port ${PORT}`.bgYellow);
 });
- 

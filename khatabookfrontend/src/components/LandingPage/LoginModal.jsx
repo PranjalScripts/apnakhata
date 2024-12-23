@@ -1,5 +1,6 @@
 import React, { useState, useEffect, useRef } from "react";
 import { FaEyeSlash, FaEye, FaTimes } from "react-icons/fa";
+import { FcGoogle } from "react-icons/fc"; 
 import { toast } from "react-toastify";
 import axios from "axios";
 import { useAuth } from "../../context/AuthContext";
@@ -15,6 +16,10 @@ const LoginModal = ({ showLoginModal, setShowLoginModal }) => {
 
   const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
   const phoneRegex = /^[0-9]{10}$/;
+
+  const handleGoogleLogin = () => {
+    window.location.href = `${process.env.REACT_APP_URL}/auth/google`;
+  };
 
   const handleLogin = async (e) => {
     e.preventDefault();
@@ -36,10 +41,10 @@ const LoginModal = ({ showLoginModal, setShowLoginModal }) => {
       const { user, token } = response.data;
 
       if (user && token) {
-        login({ ...user, token }); // Call login from AuthContext
+        login({ ...user, token }); 
         toast.success("Login successful");
         setShowLoginModal(false);
-        navigate("/home"); // Redirect to home after login
+        navigate("/home"); 
       } else {
         toast.error("Invalid response. Please try again.");
       }
@@ -48,7 +53,6 @@ const LoginModal = ({ showLoginModal, setShowLoginModal }) => {
     }
   };
 
-  // Close modal on clicking outside or pressing Escape key
   useEffect(() => {
     const handleOutsideOrEscape = (event) => {
       if (event.key === "Escape" || (event.type === "mousedown" && modalRef.current && !modalRef.current.contains(event.target))) {
@@ -127,6 +131,26 @@ const LoginModal = ({ showLoginModal, setShowLoginModal }) => {
             >
               Login
             </button>
+
+            {/* Google Sign In Button */}
+            <div className="relative my-4">
+              <div className="absolute inset-0 flex items-center">
+                <div className="w-full border-t border-gray-300"></div>
+              </div>
+              <div className="relative flex justify-center text-sm">
+                <span className="px-2 bg-white text-gray-500">Or continue with</span>
+              </div>
+            </div>
+
+            <button
+              type="button"
+              onClick={handleGoogleLogin}
+              className="w-full flex items-center justify-center gap-2 bg-white border border-gray-300 text-gray-700 py-2 rounded-md hover:bg-gray-50 transition duration-300"
+            >
+              <FcGoogle size={20} />
+              Sign in with Google
+            </button>
+
             <p className="text-center mt-4 text-sm text-gray-600">
               Don’t have an account?{" "}
               <a href="/signup" className="text-blue-600 hover:underline">
