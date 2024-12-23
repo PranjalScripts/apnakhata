@@ -17,12 +17,9 @@ const userSchema = new mongoose.Schema(
     },
     phone: {
       type: String,
-      required: function() {
-        // Only required if not using Google auth
-        return !this.googleId;
-      },
       unique: true,
-      sparse: true
+      sparse: true, // This allows multiple null values
+      default: null
     },
     password: {
       type: String,
@@ -40,14 +37,20 @@ const userSchema = new mongoose.Schema(
       unique: true,
       sparse: true
     },
-    avatar: {
-      type: String
+    countryCode: {
+      type: String,
+      default: null
+    },
+    hasCompletedProfile: {
+      type: Boolean,
+      default: false
     }
   },
-  {
-    timestamps: true
-  }
+  { timestamps: true }
 );
+
+// Add index for phone with sparse option
+userSchema.index({ phone: 1 }, { unique: true, sparse: true });
 
 const User = mongoose.model("User", userSchema);
 
